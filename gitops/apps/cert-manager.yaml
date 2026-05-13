@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+      targetRevision: HEAD
+      ref: values
+    - repoURL: https://charts.jetstack.io
+      chart: cert-manager
+      targetRevision: 1.20.2
+      helm:
+        releaseName: cert-manager
+        valueFiles:
+          - $values/gitops/config/cert-manager/values.yaml
+    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+      targetRevision: HEAD
+      path: gitops/config/cert-manager/manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

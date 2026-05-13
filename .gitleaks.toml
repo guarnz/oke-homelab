@@ -1,0 +1,5 @@
+[allowlist]
+description = "False positives in ExternalSecret manifests — key refers to Vault path, not a secret value"
+paths = [
+  '''gitops/apps/.*/manifests/external-secret\.yaml''',
+]

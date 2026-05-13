@@ -1,0 +1,16 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: authentik
+  namespace: security
+spec:
+  hosts:
+    - iam.nieri0x73.com
+  gateways:
+    - authentik
+  http:
+    - route:
+        - destination:
+            host: authentik-server
+            port:
+              number: 80

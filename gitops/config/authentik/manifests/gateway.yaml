@@ -1,0 +1,28 @@
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: authentik
+  namespace: security
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: iam.nieri0x73.com
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: authentik-tls
+      hosts:
+        - iam.nieri0x73.com
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      tls:
+        httpsRedirect: true
+      hosts:
+        - iam.nieri0x73.com

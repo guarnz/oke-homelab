@@ -1,0 +1,47 @@
+injector:
+  enabled: false
+server:
+  image:
+    repository: docker.io/hashicorp/vault
+  standalone:
+    enabled: true
+    config: |
+      ui = true
+
+      listener "tcp" {
+        tls_disable = 1
+        address = "[::]:8200"
+        cluster_address = "[::]:8201"
+      }
+
+      storage "file" {
+        path = "/vault/data"
+      }
+
+      seal "ocikms" {
+        key_id              = "ocid1.key.oc1.sa-vinhedo-1.hfvaevrsaaap2.ab3ggljrmsl27ujris34wklno3xqvlzxphcc3twydkbydxupiedhp6kbrheq"
+        crypto_endpoint     = "https://hfvaevrsaaap2-crypto.kms.sa-vinhedo-1.oci.oraclecloud.com"
+        management_endpoint = "https://hfvaevrsaaap2-management.kms.sa-vinhedo-1.oci.oraclecloud.com"
+        auth_type_api_key   = false
+      }
+
+      telemetry {
+        prometheus_retention_time = "30s"
+        disable_hostname          = true
+      }
+  logLevel: "warn"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+  dataStorage:
+    enabled: true
+    size: 2Gi
+    storageClass: longhorn
+  terminationGracePeriodSeconds: 30
+  preStopSleepSeconds: 10
+ui:
+  enabled: true

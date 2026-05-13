@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vaultwarden
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+      targetRevision: HEAD
+      ref: values
+    - repoURL: https://guerzon.github.io/vaultwarden
+      chart: vaultwarden
+      targetRevision: 0.36.4
+      helm:
+        releaseName: vaultwarden
+        valueFiles:
+          - $values/gitops/config/vaultwarden/values.yaml
+    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+      targetRevision: HEAD
+      path: gitops/config/vaultwarden/manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: apps
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+  ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      jsonPointers:
+        - /spec/volumeClaimTemplates/0/apiVersion
+        - /spec/volumeClaimTemplates/0/kind

@@ -1,0 +1,34 @@
+replicaCount: 1
+labels:
+  app: istio-ingressgateway
+  istio: ingressgateway
+podAnnotations:
+  sidecar.istio.io/inject: "false"
+autoscaling:
+  enabled: false
+service:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  annotations:
+    oci.oraclecloud.com/load-balancer-type: "nlb"
+    oci-network-load-balancer.oraclecloud.com/is-preserve-source: "true"
+  ports:
+    - name: status-port
+      port: 15021
+      protocol: TCP
+      targetPort: 15021
+    - name: http2
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 8443
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 300m
+    memory: 256Mi

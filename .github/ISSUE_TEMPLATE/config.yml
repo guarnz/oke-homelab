@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: OCI Documentation
+    url: https://docs.oracle.com/en-us/iaas/Content/ContEng/home.htm
+    about: Oracle Kubernetes Engine (OKE) official documentation
+  - name: Kubernetes Documentation
+    url: https://kubernetes.io/docs/
+    about: Kubernetes official documentation

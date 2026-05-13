@@ -1,0 +1,26 @@
+image:
+  repository: docker.io/n8nio/n8n
+timezone: "America/Sao_Paulo"
+existingEncryptionKeySecret: "n8n-credentials"
+db:
+  type: sqlite
+service:
+  type: ClusterIP
+  port: 5678
+ingress:
+  enabled: false
+main:
+  editorBaseUrl: "https://automation.nieri0x73.com"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
+  persistence:
+    enabled: true
+    storageClass: longhorn
+    size: 5Gi
+webhook:
+  url: "https://automation.nieri0x73.com"

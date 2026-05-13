@@ -1,0 +1,20 @@
+cluster:
+  instances: 2
+  imageName: ghcr.io/cloudnative-pg/postgresql:17
+  storage:
+    size: 5Gi
+    storageClass: longhorn
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  superuserSecret: postgres-credentials
+  bootstrap:
+    initdb:
+      database: app
+      owner: app
+  backup:
+    retentionPolicy: "7d"

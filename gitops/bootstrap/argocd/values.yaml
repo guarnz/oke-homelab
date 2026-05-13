@@ -1,0 +1,8 @@
+global:
+  domain: gitops.nieri0x73.com
+configs:
+  params:
+    server.insecure: true
+server:
+  service:
+    type: ClusterIP

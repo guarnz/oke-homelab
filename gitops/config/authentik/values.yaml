@@ -1,0 +1,29 @@
+authentik:
+  existingSecret:
+    secretName: authentik-credentials
+postgresql:
+  enabled: true
+  auth:
+    username: authentik
+    database: authentik
+    existingSecret: authentik-credentials
+    secretKeys:
+      userPasswordKey: password
+redis:
+  enabled: true
+server:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+worker:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi

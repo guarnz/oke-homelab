@@ -1,0 +1,20 @@
+provider:
+  name: cloudflare
+sources:
+  - istio-gateway
+extraArgs:
+  - --exclude-target-net=10.0.0.0/8
+  - --cloudflare-proxied
+env:
+  - name: CF_API_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: externaldns-credentials
+        key: token
+resources:
+  requests:
+    cpu: 25m
+    memory: 32Mi
+  limits:
+    cpu: 100m
+    memory: 64Mi

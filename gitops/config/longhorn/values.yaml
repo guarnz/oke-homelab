@@ -1,0 +1,40 @@
+preUpgradeChecker:
+  jobEnabled: false
+defaultSettings:
+  defaultReplicaCount: 2
+  storageMinimalAvailablePercentage: 10
+persistence:
+  defaultClass: true
+  defaultClassReplicaCount: 2
+longhornManager:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+longhornDriver:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+longhornUI:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+metrics:
+  serviceMonitor:
+    enabled: false
+# defaultBackupStore:
+
+#   backupTarget: s3://<bucket-name>@<region>/
+#   backupTargetCredentialSecret: longhorn-credentials

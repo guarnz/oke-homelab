@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+      targetRevision: HEAD
+      ref: values
+    - repoURL: https://argoproj.github.io/argo-helm
+      chart: argo-cd
+      targetRevision: 9.5.13
+      helm:
+        releaseName: argocd
+        valueFiles:
+          - $values/gitops/bootstrap/argocd/values.yaml
+    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+      targetRevision: HEAD
+      path: gitops/bootstrap/argocd/manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

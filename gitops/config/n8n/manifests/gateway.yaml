@@ -1,0 +1,28 @@
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: n8n
+  namespace: apps
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: automation.nieri0x73.com
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: n8n-tls
+      hosts:
+        - automation.nieri0x73.com
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      tls:
+        httpsRedirect: true
+      hosts:
+        - automation.nieri0x73.com

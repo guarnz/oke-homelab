@@ -1,0 +1,43 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":dependencyDashboard",
+    ":rebaseStalePrs",
+    "docker:disable"
+  ],
+  "terraform": {},
+  "pre-commit": {
+    "enabled": true
+  },
+  "argocd": {
+    "managerFilePatterns": [
+      "/gitops/apps/.+\\.yaml$/"
+    ]
+  },
+  "timezone": "America/Sao_Paulo",
+  "schedule": [
+    "after 3am and before 7am on Monday"
+  ],
+  "packageRules": [
+    {
+      "matchManagers": ["pre-commit"],
+      "groupName": "pre-commit hooks"
+    },
+    {
+      "matchManagers": ["terraform"],
+      "matchDepTypes": ["provider"],
+      "groupName": "terraform providers"
+    },
+    {
+      "matchManagers": ["terraform"],
+      "matchDepTypes": ["module"],
+      "groupName": "terraform modules"
+    },
+    {
+      "matchManagers": ["argocd"],
+      "groupName": "helm charts"
+    }
+  ]
+}
