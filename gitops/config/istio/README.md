@@ -87,21 +87,3 @@ hosts:
 ```
 
 Combine with the `letsencrypt-http01` ClusterIssuer from cert-manager to also get a valid TLS certificate.
-
-## Using nip.io without a Custom Domain
-
-If you don't have a custom domain, you can use [nip.io](https://nip.io) with the load balancer public IP to get a resolvable hostname for free:
-
-```bash
-# Get the load balancer public IP
-kubectl get svc -n istio-system istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[1].ip}'
-```
-
-Then use the IP in the Gateway hostname:
-
-```yaml
-hosts:
-  - myapp.<load-balancer-ip>.nip.io
-```
-
-Combine with the `letsencrypt-http01` ClusterIssuer from cert-manager to also get a valid TLS certificate.
