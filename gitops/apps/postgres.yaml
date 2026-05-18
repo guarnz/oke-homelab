@@ -15,7 +15,7 @@ spec:
       ref: values
     - repoURL: https://cloudnative-pg.github.io/charts
       chart: cluster
-      targetRevision: 0.6.0
+      targetRevision: 0.6.1
       helm:
         releaseName: postgres
         valueFiles:
