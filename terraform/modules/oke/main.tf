@@ -66,10 +66,9 @@ resource "oci_containerengine_node_pool" "this" {
   }
 
   node_source_details {
-    image_id                      = jsondecode(data.jq_query.latest_image.result)
-    source_type                   = "image"
-    boot_volume_size_in_gbs       = 100
-    is_transit_encryption_enabled = true
+    image_id                = jsondecode(data.jq_query.latest_image.result)
+    source_type             = "image"
+    boot_volume_size_in_gbs = 100
   }
 
   initial_node_labels {
