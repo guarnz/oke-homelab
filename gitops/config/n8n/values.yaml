@@ -18,6 +18,27 @@ main:
     limits:
       cpu: 300m
       memory: 512Mi
+  startupProbe:
+    httpGet:
+      path: /healthz
+      port: http
+    periodSeconds: 10
+    failureThreshold: 18
+    timeoutSeconds: 3
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: http
+    periodSeconds: 10
+    failureThreshold: 3
+    timeoutSeconds: 3
+  readinessProbe:
+    httpGet:
+      path: /healthz/readiness
+      port: http
+    periodSeconds: 10
+    failureThreshold: 3
+    timeoutSeconds: 3
   persistence:
     enabled: true
     storageClass: longhorn
