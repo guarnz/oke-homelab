@@ -1,10 +1,10 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: authentik-tls
+  name: zitadel-tls
   namespace: istio-system
 spec:
-  secretName: authentik-tls
+  secretName: zitadel-tls
   issuerRef:
     name: letsencrypt-dns01
     kind: ClusterIssuer

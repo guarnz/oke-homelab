@@ -11,7 +11,7 @@ Production-grade Kubernetes cluster running **entirely free** on OCI Always Free
 
 ## Overview
 
-This repository contains the complete infrastructure and application stack for a personal Kubernetes cluster, following GitOps principles with Argo CD. Everything is managed as code — from the underlying OCI infrastructure (Terraform) to the Kubernetes applications (Helm), including secrets management (Vault), SSO (Authentik) and distributed storage (Longhorn).
+This repository contains the complete infrastructure and application stack for a personal Kubernetes cluster, following GitOps principles with Argo CD. Everything is managed as code — from the underlying OCI infrastructure (Terraform) to the Kubernetes applications (Helm), including secrets management (Vault), SSO (Zitadel) and distributed storage (Longhorn).
 
 Enterprise-grade architecture running at **zero cost**, made possible by the OCI Always Free tier.
 
@@ -30,7 +30,7 @@ Enterprise-grade architecture running at **zero cost**, made possible by the OCI
 | [Longhorn](gitops/config/longhorn/README.md) | Distributed block storage |
 | [CloudNativePG](gitops/config/cloudnativepg/) | PostgreSQL operator |
 | [PostgreSQL](gitops/config/postgres/README.md) | PostgreSQL cluster |
-| [Authentik](gitops/config/authentik/README.md) | Identity and Access Management (SSO) |
+| [Zitadel](gitops/config/zitadel/README.md) | Identity and Access Management (SSO) |
 | [Vaultwarden](gitops/config/vaultwarden/README.md) | Self-hosted password manager |
 | [N8N](gitops/config/n8n/README.md) | Workflow automation |
 | [Metrics Server](gitops/config/metrics-server/README.md) | Resource metrics for HPA and kubectl top |
@@ -141,7 +141,7 @@ kubectl exec -n security vault-0 -- vault write auth/kubernetes/config \
   kubernetes_host="https://kubernetes.default.svc"
 
 # Populate secrets for each app
-kubectl exec -n security vault-0 -- vault kv put secret/authentik AUTHENTIK_SECRET_KEY='...'
+kubectl exec -n security vault-0 -- vault kv put secret/zitadel masterkey='...'
 kubectl exec -n security vault-0 -- vault kv put secret/vaultwarden ADMIN_TOKEN='...'
 # See each app README for required secret keys
 ```

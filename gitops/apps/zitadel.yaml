@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: authentik
+  name: zitadel
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "4"
@@ -13,16 +13,16 @@ spec:
     - repoURL: https://github.com/nieri0x73/oci-free-k8s
       targetRevision: HEAD
       ref: values
-    - repoURL: https://charts.goauthentik.io
-      chart: authentik
-      targetRevision: 2026.2.3
+    - repoURL: https://charts.zitadel.com
+      chart: zitadel
+      targetRevision: 10.0.1
       helm:
-        releaseName: authentik
+        releaseName: zitadel
         valueFiles:
-          - $values/gitops/config/authentik/values.yaml
+          - $values/gitops/config/zitadel/values.yaml
     - repoURL: https://github.com/nieri0x73/oci-free-k8s
       targetRevision: HEAD
-      path: gitops/config/authentik/manifests
+      path: gitops/config/zitadel/manifests
   destination:
     server: https://kubernetes.default.svc
     namespace: security

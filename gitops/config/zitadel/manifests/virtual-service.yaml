@@ -1,16 +1,16 @@
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: authentik
+  name: zitadel
   namespace: security
 spec:
   hosts:
     - iam.nieri0x73.com
   gateways:
-    - authentik
+    - zitadel
   http:
     - route:
         - destination:
-            host: authentik-server
+            host: zitadel
             port:
-              number: 80
+              number: 8080

@@ -20,7 +20,7 @@ If you discover a security vulnerability, please **do not open a public issue**.
 
 ### Access Control
 
-- **SSO** for all externally exposed web UIs via Authentik (OIDC), except those accessed via port-forward
+- **SSO** for all externally exposed web UIs via Zitadel (OIDC), except those accessed via port-forward
 - **Single ingress point** — all external traffic goes through Istio Gateway
 - **Instance Principal** — OCI authentication uses Instance Principal, no API keys stored in the repository
 

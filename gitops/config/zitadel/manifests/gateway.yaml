@@ -1,7 +1,7 @@
 apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
-  name: authentik
+  name: zitadel
   namespace: security
   annotations:
     external-dns.alpha.kubernetes.io/hostname: iam.nieri0x73.com
@@ -15,7 +15,7 @@ spec:
         protocol: HTTPS
       tls:
         mode: SIMPLE
-        credentialName: authentik-tls
+        credentialName: zitadel-tls
       hosts:
         - iam.nieri0x73.com
     - port:

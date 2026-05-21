@@ -1,0 +1,92 @@
+# Zitadel
+
+Identity and Access Management deployed via the [zitadel](https://charts.zitadel.com) Helm chart. Provides SSO (Single Sign-On) for all cluster applications via OpenID Connect.
+
+## Access
+
+| URL | Description |
+|-----|-------------|
+| `https://<your-domain>` | Zitadel Console |
+| `https://<your-domain>/ui/console` | Admin console |
+
+The `manifests/` directory contains the Istio Gateway, VirtualService and cert-manager Certificate. Update the domain in these files to match your own FQDN before deploying.
+
+## Vault Secret
+
+All sensitive configuration is stored in HashiCorp Vault at path `secret/zitadel` and synced to the Kubernetes secret `zitadel-credentials` via External Secrets Operator. The same secret is consumed by both the Zitadel server (`masterkey` and database env vars) and the bundled Bitnami PostgreSQL subchart (`existingSecret`).
+
+### Required keys
+
+| Key | Description | Example |
+|-----|-------------|---------|
+| `masterkey` | Encryption key used to seal events and tokens — must be exactly 32 characters and never changed after first install | `32-char-random-alphanumeric` |
+| `postgres-password` | PostgreSQL admin (`postgres`) password — used by Zitadel for migrations | `your-postgres-admin-password` |
+| `password` | PostgreSQL application user (`zitadel`) password — used by Zitadel at runtime | `your-zitadel-db-password` |
+
+### Populating Vault
+
+```bash
+vault kv put secret/zitadel \
+  masterkey="$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c 32)" \
+  postgres-password='your-postgres-admin-password' \
+  password='your-zitadel-db-password'
+```
+
+> The vault-bootstrap.sh script handles Vault initialization and Kubernetes auth setup. Run it before populating the secrets above.
+
+## Initial Admin User
+
+The first instance is created automatically by the chart on bootstrap, using the user defined in `values.yaml` under `zitadel.configmapConfig.FirstInstance.Org.Human`. The initial credentials are printed in the `zitadel-init` Job logs:
+
+```bash
+kubectl -n security logs job/zitadel-init -c zitadel-init | grep -E 'username|password'
+```
+
+The initial password must be changed on first login. Sign in at `https://<your-domain>` with the admin email configured in the values file.
+
+## Post-Deploy Configuration
+
+After Zitadel is running, configure the following via the admin console.
+
+### 1. OIDC Applications
+
+Each application that should use SSO is registered as an Application inside a Project in Zitadel:
+
+1. Navigate to **Projects → Create new project** (e.g. `homelab`)
+2. Inside the project, **Applications → New**, then for each app:
+   - **Type:** Web (for ArgoCD, n8n, Vaultwarden)
+   - **Authentication Method:** Code + PKCE (or `Basic Auth` if the client cannot do PKCE)
+   - **Redirect URI** per app:
+
+| Application | Redirect URI |
+|-------------|--------------|
+| ArgoCD | `https://<argocd-domain>/auth/callback` |
+| n8n | `https://<n8n-domain>/rest/sso/oauth2/callback` |
+| Vaultwarden | `https://<vaultwarden-domain>/identity/connect/oidc-signin` |
+
+After creating each application, copy:
+- **Client ID**
+- **Client Secret** (shown only once; if you regenerate, the previous one is invalidated)
+- **Issuer URL**: `https://<your-domain>` (Zitadel uses the instance domain as the OIDC issuer)
+
+These values feed into the consuming app's Vault path (see each app's README).
+
+### 2. GitHub Social Login
+
+Add GitHub as an Identity Provider so users can sign in with their GitHub account:
+
+1. Create an OAuth App on GitHub: **Settings → Developer Settings → OAuth Apps → New OAuth App**
+   - **Homepage URL**: `https://<your-domain>`
+   - **Callback URL**: `https://<your-domain>/ui/login/login/externalidp/callback`
+2. In Zitadel Console: **Instance → Identity Providers → New → GitHub**
+   - Paste **Client ID** and **Client Secret** from GitHub
+   - **Scopes**: leave default (`openid`, `profile`, `email`)
+3. Activate the IdP on the default Login Policy: **Instance → Login Policy → Identity Providers → Add**
+
+When `autoRegister` is enabled on the IdP, the first GitHub login provisions a matching Zitadel user automatically.
+
+## Notes
+
+- The chart bundles a Bitnami PostgreSQL subchart (`postgresql.enabled: true`). It is kept separate from the cluster's main `postgres-cluster` so that Zitadel migrations are isolated from other application data.
+- Configuration is split between the ConfigMap (`zitadel.configmapConfig`, non-sensitive) and environment variables sourced from `zitadel-credentials` (sensitive — database passwords).
+- Losing `masterkey` means losing access to all encrypted data in the database. Back it up alongside the Vault unseal/recovery keys.
