@@ -20,8 +20,8 @@ All sensitive configuration is stored in HashiCorp Vault at path `secret/zitadel
 | Key | Description | Example |
 |-----|-------------|---------|
 | `masterkey` | Encryption key used to seal events and tokens — must be exactly 32 characters and never changed after first install | `32-char-random-alphanumeric` |
-| `postgres-password` | PostgreSQL admin (`postgres`) password — used by Zitadel for migrations | `your-postgres-admin-password` |
-| `password` | PostgreSQL application user (`zitadel`) password — used by Zitadel at runtime | `your-zitadel-db-password` |
+| `postgres-password` | Password of the external `postgres` superuser in `postgres-cluster` — used by Zitadel for migrations. Must match the value stored in the `postgres-credentials` secret under the `databases` namespace | `same-as-postgres-cluster-superuser` |
+| `password` | Password of the `zitadel` application user in the external `postgres-cluster` — used by Zitadel at runtime. Must match the password configured on the role when it was created | `your-zitadel-db-password` |
 | `admin-password` | Initial password for the first human admin user. Must be changed on first login (`PasswordChangeRequired: true`) | `your-initial-admin-password` |
 
 ### Populating Vault
@@ -85,8 +85,41 @@ Add GitHub as an Identity Provider so users can sign in with their GitHub accoun
 
 When `autoRegister` is enabled on the IdP, the first GitHub login provisions a matching Zitadel user automatically.
 
+## Database
+
+Zitadel uses the cluster's shared **`postgres-cluster`** (CloudNativePG) in the `databases` namespace as its database. The bundled Bitnami PostgreSQL subchart is disabled (`postgresql.enabled: false`). Connection target:
+
+```
+postgres-cluster-rw.databases.svc.cluster.local:5432
+```
+
+### Bootstrapping the database
+
+The `zitadel` user and `zitadel` database must exist in `postgres-cluster` **before** the chart runs its setup Job — Zitadel does not create them, and the `postgres` superuser is only used for migrations. Pick whichever style fits your workflow:
+
+#### Inline (one-off, via psql)
+
+Run once against the cluster:
+
+```bash
+ZITADEL_PASS=$(kubectl -n security get secret zitadel-credentials -o jsonpath='{.data.password}' | base64 -d)
+kubectl -n databases exec postgres-cluster-1 -c postgres -- psql -U postgres -v ON_ERROR_STOP=1 <<SQL
+CREATE USER zitadel WITH PASSWORD '${ZITADEL_PASS}';
+CREATE DATABASE zitadel OWNER zitadel;
+GRANT ALL PRIVILEGES ON DATABASE zitadel TO zitadel;
+SQL
+```
+
+The password set here must match the `password` key in Vault `secret/zitadel`.
+
+#### Declarative (GitOps, via CNPG `Database` CR)
+
+If you'd rather keep the bootstrap in the repo, add a `Database` resource under `gitops/config/postgres/manifests/` so ArgoCD reconciles it alongside `postgres-cluster`. The CRD is documented at <https://cloudnative-pg.io/documentation/current/declarative_database_management/>.
+
+Either approach is fine — the inline form is faster for the first install, the declarative form survives full cluster rebuilds.
+
 ## Notes
 
-- The chart bundles a Bitnami PostgreSQL subchart (`postgresql.enabled: true`). It is kept separate from the cluster's main `postgres-cluster` so that Zitadel migrations are isolated from other application data.
-- Configuration is split between the ConfigMap (`zitadel.configmapConfig`, non-sensitive) and environment variables sourced from `zitadel-credentials` (sensitive — database passwords).
+- Configuration is split between the ConfigMap (`zitadel.configmapConfig`, non-sensitive) and environment variables sourced from `zitadel-credentials` (sensitive — database passwords and admin bootstrap password).
+- The `postgres-password` in Vault must match the superuser password of `postgres-cluster` (the same value stored in `secret/postgres`). Without this, the chart's setup Job cannot run migrations.
 - Losing `masterkey` means losing access to all encrypted data in the database. Back it up alongside the Vault unseal/recovery keys.

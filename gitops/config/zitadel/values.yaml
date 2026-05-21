@@ -8,7 +8,7 @@ zitadel:
       Enabled: false
     Database:
       Postgres:
-        Host: zitadel-postgresql
+        Host: postgres-cluster-rw.databases.svc.cluster.local
         Port: 5432
         Database: zitadel
         MaxOpenConns: 10
@@ -58,19 +58,4 @@ env:
         name: zitadel-credentials
         key: admin-password
 postgresql:
-  enabled: true
-  auth:
-    username: zitadel
-    database: zitadel
-    existingSecret: zitadel-credentials
-    secretKeys:
-      adminPasswordKey: postgres-password
-      userPasswordKey: password
-  primary:
-    resources:
-      requests:
-        cpu: 50m
-        memory: 128Mi
-      limits:
-        cpu: 300m
-        memory: 256Mi
+  enabled: false
