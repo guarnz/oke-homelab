@@ -18,17 +18,11 @@ main:
     limits:
       cpu: 300m
       memory: 512Mi
-  startupProbe:
-    httpGet:
-      path: /healthz
-      port: http
-    periodSeconds: 10
-    failureThreshold: 18
-    timeoutSeconds: 3
   livenessProbe:
     httpGet:
       path: /healthz
       port: http
+    initialDelaySeconds: 180
     periodSeconds: 10
     failureThreshold: 3
     timeoutSeconds: 3
@@ -36,6 +30,7 @@ main:
     httpGet:
       path: /healthz/readiness
       port: http
+    initialDelaySeconds: 30
     periodSeconds: 10
     failureThreshold: 3
     timeoutSeconds: 3
