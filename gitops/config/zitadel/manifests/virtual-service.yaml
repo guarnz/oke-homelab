@@ -9,6 +9,14 @@ spec:
   gateways:
     - zitadel
   http:
+    - match:
+        - uri:
+            prefix: /ui/v2/login
+      route:
+        - destination:
+            host: zitadel-login
+            port:
+              number: 3000
     - route:
         - destination:
             host: zitadel
