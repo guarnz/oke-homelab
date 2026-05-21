@@ -22,6 +22,7 @@ All sensitive configuration is stored in HashiCorp Vault at path `secret/zitadel
 | `masterkey` | Encryption key used to seal events and tokens — must be exactly 32 characters and never changed after first install | `32-char-random-alphanumeric` |
 | `postgres-password` | PostgreSQL admin (`postgres`) password — used by Zitadel for migrations | `your-postgres-admin-password` |
 | `password` | PostgreSQL application user (`zitadel`) password — used by Zitadel at runtime | `your-zitadel-db-password` |
+| `admin-password` | Initial password for the first human admin user. Must be changed on first login (`PasswordChangeRequired: true`) | `your-initial-admin-password` |
 
 ### Populating Vault
 
@@ -29,20 +30,19 @@ All sensitive configuration is stored in HashiCorp Vault at path `secret/zitadel
 vault kv put secret/zitadel \
   masterkey="$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c 32)" \
   postgres-password='your-postgres-admin-password' \
-  password='your-zitadel-db-password'
+  password='your-zitadel-db-password' \
+  admin-password='your-initial-admin-password'
 ```
 
 > The vault-bootstrap.sh script handles Vault initialization and Kubernetes auth setup. Run it before populating the secrets above.
 
 ## Initial Admin User
 
-The first instance is created automatically by the chart on bootstrap, using the user defined in `values.yaml` under `zitadel.configmapConfig.FirstInstance.Org.Human`. The initial credentials are printed in the `zitadel-init` Job logs:
+The first instance is created automatically by the chart on bootstrap, using the user defined in `values.yaml` under `zitadel.configmapConfig.FirstInstance.Org.Human`. The initial password is sourced from the `admin-password` key in `zitadel-credentials` and password change is required on first login.
 
-```bash
-kubectl -n security logs job/zitadel-init -c zitadel-init | grep -E 'username|password'
-```
+The auto-generated login name follows the pattern `<UserName>@<OrgName>.<ExternalDomain>` — for example `admin@nieri0x73.iam.nieri0x73.com`. The contact email defined under `Email.Address` is separate from the login name and can later be enabled as an alternative login method in the Login Policy.
 
-The initial password must be changed on first login. Sign in at `https://<your-domain>` with the admin email configured in the values file.
+Sign in at `https://<your-domain>` with the generated login name and the password stored in Vault.
 
 ## Post-Deploy Configuration
 
