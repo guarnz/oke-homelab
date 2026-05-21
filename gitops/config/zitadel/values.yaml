@@ -33,17 +33,6 @@ zitadel:
           Email:
             Address: admin@nieri0x73.com
             Verified: true
-  env:
-    - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: zitadel-credentials
-          key: password
-    - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: zitadel-credentials
-          key: postgres-password
   resources:
     requests:
       cpu: 100m
@@ -51,6 +40,17 @@ zitadel:
     limits:
       cpu: 500m
       memory: 512Mi
+env:
+  - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: zitadel-credentials
+        key: password
+  - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: zitadel-credentials
+        key: postgres-password
 postgresql:
   enabled: true
   auth:
