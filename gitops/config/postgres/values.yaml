@@ -1,6 +1,6 @@
 cluster:
   instances: 2
-  imageName: ghcr.io/cloudnative-pg/postgresql:17
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.4
   storage:
     size: 5Gi
     storageClass: longhorn
