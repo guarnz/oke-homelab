@@ -15,7 +15,7 @@ spec:
       ref: values
     - repoURL: https://charts.zitadel.com
       chart: zitadel
-      targetRevision: 10.0.1
+      targetRevision: 10.0.2
       helm:
         releaseName: zitadel
         valueFiles:
