@@ -1,6 +1,9 @@
 image:
   repository: docker.io/n8nio/n8n
 timezone: "America/Sao_Paulo"
+strategy:
+  type: Recreate
+  rollingUpdate: null
 existingEncryptionKeySecret: "n8n-credentials"
 db:
   type: sqlite
