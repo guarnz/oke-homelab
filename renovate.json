@@ -15,18 +15,6 @@
       "/gitops/apps/.+\\.yaml$/"
     ]
   },
-  "customManagers": [
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/gitops/config/postgres/values\\.yaml$/"
-      ],
-      "matchStrings": [
-        "imageName:\\s*(?<depName>ghcr\\.io/cloudnative-pg/postgresql):(?<currentValue>\\S+)"
-      ],
-      "datasourceTemplate": "docker"
-    }
-  ],
   "timezone": "America/Sao_Paulo",
   "schedule": [
     "after 3am and before 7am on Monday"
