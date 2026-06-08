@@ -36,7 +36,9 @@
     },
     {
       "matchManagers": ["argocd"],
-      "groupName": "helm charts"
+      "matchFileNames": ["gitops/apps/**"],
+      "groupName": "{{replace '\\.yaml$' '' (replace '^gitops/apps/' '' packageFile)}}",
+      "commitMessageTopic": "{{replace '\\.yaml$' '' (replace '^gitops/apps/' '' packageFile)}}"
     }
   ]
 }
