@@ -17,13 +17,14 @@ main:
   extraEnvVars:
     N8N_TRUST_PROXY: "true"
     N8N_PROXY_HOPS: "1"
+    NODE_OPTIONS: "--max-old-space-size=768"
   resources:
     requests:
       cpu: 100m
-      memory: 256Mi
+      memory: 384Mi
     limits:
       cpu: 300m
-      memory: 512Mi
+      memory: 1Gi
   livenessProbe:
     httpGet:
       path: /healthz
