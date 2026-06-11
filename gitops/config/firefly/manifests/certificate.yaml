@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: firefly-tls
+  namespace: istio-system
+spec:
+  secretName: firefly-tls
+  issuerRef:
+    name: letsencrypt-dns01
+    kind: ClusterIssuer
+  dnsNames:
+    - finance.nieri0x73.com
+    - finance-importer.nieri0x73.com

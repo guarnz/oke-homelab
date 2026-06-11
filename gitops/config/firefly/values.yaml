@@ -1,0 +1,66 @@
+firefly-db:
+  enabled: false
+firefly-iii:
+  config:
+    existingSecret: firefly-credentials
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres-cluster-rw.databases.svc.cluster.local
+      DB_PORT: "5432"
+      DB_DATABASE: firefly
+      DB_USERNAME: firefly
+      APP_URL: https://finance.nieri0x73.com
+      SITE_OWNER: admin@nieri0x73.com
+      DEFAULT_LANGUAGE: en_US
+      DEFAULT_LOCALE: equal
+      TZ: America/Sao_Paulo
+      TRUSTED_PROXIES: "**"
+  persistence:
+    enabled: true
+    storageClassName: longhorn
+    accessModes: ReadWriteOnce
+    storage: 2Gi
+  service:
+    type: ClusterIP
+    port: 80
+  ingress:
+    enabled: false
+  resources:
+    requests:
+      cpu: 50m
+      memory: 192Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
+  cronjob:
+    enabled: true
+    schedule: "0 3 * * *"
+    auth:
+      existingSecret: firefly-credentials
+      secretKey: STATIC_CRON_TOKEN
+importer:
+  enabled: true
+  fireflyiii:
+    url: http://firefly-firefly-iii:80
+    vanityUrl: https://finance.nieri0x73.com
+    auth:
+      existingSecret: firefly-credentials
+  config:
+    env:
+      IGNORE_DUPLICATE_ERRORS: "false"
+      TZ: America/Sao_Paulo
+      TRUSTED_PROXIES: "**"
+      APP_URL: https://finance-importer.nieri0x73.com
+    files: []
+  service:
+    type: ClusterIP
+    port: 80
+  ingress:
+    enabled: false
+  resources:
+    requests:
+      cpu: 25m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 384Mi

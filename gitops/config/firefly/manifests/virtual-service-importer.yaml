@@ -1,0 +1,16 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: firefly-importer
+  namespace: apps
+spec:
+  hosts:
+    - finance-importer.nieri0x73.com
+  gateways:
+    - firefly
+  http:
+    - route:
+        - destination:
+            host: firefly-importer
+            port:
+              number: 80

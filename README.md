@@ -33,6 +33,7 @@ Enterprise-grade architecture running at **zero cost**, made possible by the OCI
 | [Zitadel](gitops/config/zitadel/README.md) | Identity and Access Management (SSO) |
 | [Vaultwarden](gitops/config/vaultwarden/README.md) | Self-hosted password manager |
 | [N8N](gitops/config/n8n/README.md) | Workflow automation |
+| [Firefly III](gitops/config/firefly/README.md) | Self-hosted personal finance manager |
 | [Metrics Server](gitops/config/metrics-server/README.md) | Resource metrics for HPA and kubectl top |
 
 ## Structure
