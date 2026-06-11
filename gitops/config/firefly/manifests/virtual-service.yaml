@@ -11,6 +11,6 @@ spec:
   http:
     - route:
         - destination:
-            host: firefly-firefly-iii
+            host: finance-firefly-iii
             port:
               number: 80

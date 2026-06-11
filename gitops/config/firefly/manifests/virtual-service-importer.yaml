@@ -11,6 +11,6 @@ spec:
   http:
     - route:
         - destination:
-            host: firefly-importer
+            host: finance-importer
             port:
               number: 80

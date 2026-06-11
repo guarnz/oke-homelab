@@ -40,8 +40,10 @@ firefly-iii:
       secretKey: STATIC_CRON_TOKEN
 importer:
   enabled: true
+  image:
+    repository: docker.io/fireflyiii/data-importer
   fireflyiii:
-    url: http://firefly-firefly-iii:80
+    url: http://finance-firefly-iii:80
     vanityUrl: https://finance.nieri0x73.com
     auth:
       existingSecret: firefly-credentials

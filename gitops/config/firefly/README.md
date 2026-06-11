@@ -19,7 +19,7 @@ All sensitive configuration is stored in HashiCorp Vault at path `secret/firefly
 
 | Key | Description | Example |
 |-----|-------------|---------|
-| `APP_KEY` | Laravel `APP_KEY` used to encrypt the session and database fields — must be exactly 32 characters and never changed after first install. Overrides the chart's auto-generated `firefly-firefly-iii-app-key` Secret via `envFrom` ordering | `32-char-random-alphanumeric` |
+| `APP_KEY` | Laravel `APP_KEY` used to encrypt the session and database fields — must be exactly 32 characters and never changed after first install. Overrides the chart's auto-generated `finance-firefly-iii-app-key` Secret via `envFrom` ordering | `32-char-random-alphanumeric` |
 | `DB_PASSWORD` | Password of the `firefly` application user in the external `postgres-cluster` — must match the password configured on the role when it was created | `your-firefly-db-password` |
 | `STATIC_CRON_TOKEN` | Token consumed by the recurring transactions CronJob — must be exactly 32 characters | `32-char-random-alphanumeric` |
 | `accessToken` | Personal Access Token used by the Data Importer to authenticate against Firefly III. Generated on the Firefly III UI after the first login (see [Post-Deploy Configuration](#post-deploy-configuration)) | `eyJ0eXAiOiJKV1QiLCJhbGciOi...` |
@@ -129,7 +129,7 @@ vault kv patch secret/firefly accessToken='<token-from-firefly>'
 
 ```bash
 kubectl -n apps annotate externalsecret firefly-credentials force-sync=$(date +%s) --overwrite
-kubectl -n apps rollout restart deployment firefly-importer
+kubectl -n apps rollout restart deployment finance-importer
 ```
 
 6. Open the importer at `https://<importer-domain>` and click **Reauthenticate** if prompted — it should now reach the Firefly III API successfully.
@@ -142,6 +142,6 @@ The chart deploys a CronJob that hits Firefly's `/cron/<STATIC_CRON_TOKEN>` endp
 
 - Configuration is split between non-sensitive env vars in `values.yaml` (host, ports, timezone, `APP_URL`) and sensitive ones sourced from `firefly-credentials` (`APP_KEY`, `DB_PASSWORD`, `STATIC_CRON_TOKEN`, `accessToken`).
 - Losing `APP_KEY` means losing access to all encrypted data in the database — back it up alongside the Vault unseal/recovery keys.
-- The chart's auto-generated `firefly-firefly-iii-app-key` Secret holds a random `APP_KEY`, but `firefly-credentials` is loaded **after** it in `envFrom`, so the Vault value wins. Do not delete the auto-generated Secret — the chart will recreate it on every sync and it is harmless.
+- The chart's auto-generated `finance-firefly-iii-app-key` Secret holds a random `APP_KEY`, but `firefly-credentials` is loaded **after** it in `envFrom`, so the Vault value wins. Do not delete the auto-generated Secret — the chart will recreate it on every sync and it is harmless.
 - The importer's `vanityUrl` is set to the public Firefly URL so OAuth redirects work correctly behind Istio; the internal `url` stays as the in-cluster service for actual API calls.
 - Uploaded attachments (receipts, statements) live on a Longhorn PVC (`firefly-iii.persistence`) — sized at 2Gi by default, bump it if you start archiving heavy PDFs.
