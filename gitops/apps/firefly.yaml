@@ -15,7 +15,7 @@ spec:
       ref: values
     - repoURL: https://firefly-iii.github.io/kubernetes/
       chart: firefly-iii-stack
-      targetRevision: 0.10.0
+      targetRevision: 0.10.1
       helm:
         releaseName: finance
         valueFiles:
