@@ -1,0 +1,46 @@
+image:
+  repository: docker.io/velero/velero
+initContainers:
+  - name: velero-plugin-for-aws
+    image: docker.io/velero/velero-plugin-for-aws:v1.13.1
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+credentials:
+  useSecret: true
+  existingSecret: velero-credentials
+snapshotsEnabled: false
+deployNodeAgent: true
+configuration:
+  backupStorageLocation:
+    - name: default
+      provider: aws
+      bucket: oci-free-k8s-velero
+      default: true
+      config:
+        region: sa-vinhedo-1
+        s3Url: https://axtwtiiyxgxz.compat.objectstorage.sa-vinhedo-1.oraclecloud.com
+        s3ForcePathStyle: "true"
+  uploaderType: kopia
+  defaultBackupStorageLocation: default
+  defaultVolumesToFsBackup: true
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 300m
+    memory: 384Mi
+nodeAgent:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
+metrics:
+  enabled: false
+upgradeCRDs: true
+cleanUpCRDs: false
