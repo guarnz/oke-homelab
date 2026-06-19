@@ -35,6 +35,7 @@ Enterprise-grade architecture running at **zero cost**, made possible by the OCI
 | [N8N](gitops/config/n8n/README.md) | Workflow automation |
 | [Firefly III](gitops/config/firefly/README.md) | Self-hosted personal finance manager |
 | [Metrics Server](gitops/config/metrics-server/README.md) | Resource metrics for HPA and kubectl top |
+| [Velero](gitops/config/velero/README.md) | Cluster backup and disaster recovery to OCI Object Storage |
 
 ## Structure
 

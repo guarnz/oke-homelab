@@ -15,19 +15,22 @@ Backups are written to an OCI Object Storage bucket through the AWS S3-compatibl
 
 Update `bucket`, `config.region` and `config.s3Url` in `values.yaml` to match your tenancy. The Object Storage namespace can be retrieved with `oci os ns get`.
 
-The `manifests/` directory contains the External Secret that hydrates the `velero-credentials` Kubernetes secret from Vault.
+Velero is installed in the `backup` namespace. The `manifests/` directory contains two `ExternalSecret` resources that both consume the same Vault path (`secret/velero`) and hydrate two Kubernetes secrets that Velero looks up under fixed names: `velero-credentials` (bucket access) and `velero-repo-credentials` (Kopia repository encryption password).
 
 > **OCI Free Tier limit — Object Storage caps at 20 GB Standard storage across the tenancy.** Anything above is billed at the standard per-GB rate. Keep backup retention bounded with `--ttl` on schedules (e.g. `--ttl 168h` for a rolling 7-day window) and prefer incremental backups via Kopia (already enabled by `uploaderType: kopia`) so the bucket stays comfortably below the free quota. Monitor usage with `oci os bucket get-bucket --bucket-name <bucket> --fields approximateSize`.
 
 ## Vault Secret
 
-The S3-compatible credential is stored in HashiCorp Vault at path `secret/velero` and synced to the Kubernetes secret `velero-credentials` via External Secrets Operator.
+> **Populate Vault before syncing this app.** The two `ExternalSecret` resources fail to reconcile until `secret/velero` exists in Vault with both required keys (`cloud` and `repository-password`). If Velero starts and runs its first backup before `velero-repo-credentials` is hydrated, it generates its own random Kopia password — pinning a stable one afterwards is no longer possible without wiping the bucket. Populate Vault first, then let ArgoCD sync.
+
+All Velero credentials live in HashiCorp Vault at a single path: `secret/velero`. Two `ExternalSecret` resources read from this path and produce two distinct Kubernetes secrets that Velero looks up by fixed names.
 
 ### Required keys
 
-| Key | Description | Format |
-|-----|-------------|--------|
-| `cloud` | AWS-style credentials profile consumed by `velero-plugin-for-aws` | Multi-line INI |
+| Key | Used by | Description | Format |
+|-----|---------|-------------|--------|
+| `cloud` | `velero-credentials` Kubernetes secret | AWS-style credentials profile consumed by `velero-plugin-for-aws` to authenticate against the OCI Object Storage S3-compatible endpoint | Multi-line INI |
+| `repository-password` | `velero-repo-credentials` Kubernetes secret | Passphrase used by Kopia to encrypt every block written to the backup bucket. Treat as long-lived — losing it makes existing backups unrestorable | Random string (32+ chars) |
 
 ### `cloud` value format
 
@@ -39,13 +42,29 @@ aws_secret_access_key=<oci-customer-secret-key-secret-key>
 
 Generate the access/secret key pair from the OCI Console under **My profile → Customer Secret Keys → Generate Secret Key**. The secret value is shown only once at creation time.
 
+### `repository-password` value format
+
+Any high-entropy string. Generate with:
+
+```bash
+openssl rand -base64 32
+```
+
 ### Populating Vault
 
 ```bash
 vault kv put secret/velero \
   cloud='[default]
 aws_access_key_id=<access-key>
-aws_secret_access_key=<secret-key>'
+aws_secret_access_key=<secret-key>' \
+  repository-password="$(openssl rand -base64 32)"
+```
+
+After the first successful backup, also export the rendered Kubernetes secret to an offline location (or a second Vault path) so the Kopia password can be recovered in a full disaster-recovery scenario where Vault itself has to be restored from a Velero backup:
+
+```bash
+kubectl -n backup get secret velero-repo-credentials \
+  -o jsonpath='{.data.repository-password}' | base64 -d
 ```
 
 ## Volume backups

@@ -25,7 +25,7 @@ spec:
       path: gitops/config/velero/manifests
   destination:
     server: https://kubernetes.default.svc
-    namespace: velero
+    namespace: backup
   syncPolicy:
     automated:
       prune: true
