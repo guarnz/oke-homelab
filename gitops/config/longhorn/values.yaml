@@ -5,7 +5,7 @@ defaultSettings:
   storageMinimalAvailablePercentage: 10
   nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
   autoDeletePodWhenVolumeDetachedUnexpectedly: true
-  guaranteedInstanceManagerCpu: 5
+  guaranteedInstanceManagerCPU: 5
   replicaReplenishmentWaitInterval: 300
   concurrentReplicaRebuildPerNodeLimit: 2
 persistence:
