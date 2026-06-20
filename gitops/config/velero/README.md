@@ -12,6 +12,7 @@ Backups are written to an OCI Object Storage bucket through the AWS S3-compatibl
 | Region | `<your-oci-region>` |
 | S3 endpoint | `https://<your-namespace>.compat.objectstorage.<your-oci-region>.oraclecloud.com` |
 | Path style | `s3ForcePathStyle: true` (required for OCI S3 compat) |
+| Checksum algorithm | `checksumAlgorithm: ""` (required — OCI Object Storage does not implement AWS chunked encoding and would return HTTP 501 on every `PutObject` if the default checksum is left on) |
 
 Update `bucket`, `config.region` and `config.s3Url` in `values.yaml` to match your tenancy. The Object Storage namespace can be retrieved with `oci os ns get`.
 
@@ -77,33 +78,64 @@ Volume snapshots are disabled (`snapshotsEnabled: false`) because OCI Block Volu
 
 ## Common operations
 
+All Velero CLI commands need `--namespace backup` (or `export VELERO_NAMESPACE=backup`) because this deployment lives outside the default `velero` namespace.
+
 ### Trigger an on-demand backup
 
 ```bash
 velero backup create pre-migration \
+  --namespace backup \
   --include-namespaces apps,databases,security \
+  --default-volumes-to-fs-backup \
+  --ttl 168h \
   --wait
 ```
 
 ### List backups
 
 ```bash
-velero backup get
+velero backup get --namespace backup
+```
+
+### Inspect a specific backup
+
+```bash
+velero backup describe pre-migration --namespace backup --details
+velero backup logs pre-migration --namespace backup
 ```
 
 ### Restore from a backup
 
 ```bash
-velero restore create --from-backup pre-migration --wait
+velero restore create --namespace backup --from-backup pre-migration --wait
+```
+
+### Restore with storage class swap (Longhorn → oci-bv migration)
+
+```bash
+velero restore create --namespace backup \
+  --from-backup pre-migration \
+  --include-namespaces apps \
+  --include-resources persistentvolumeclaims,persistentvolumes \
+  --change-storage-classes longhorn=oci-bv \
+  --wait
 ```
 
 ### Schedule a daily backup at 03:00
 
 ```bash
 velero schedule create daily-full \
+  --namespace backup \
   --schedule="0 3 * * *" \
   --include-namespaces apps,databases,security \
+  --default-volumes-to-fs-backup \
   --ttl 168h
+```
+
+### Delete a backup (also removes data from the bucket)
+
+```bash
+velero backup delete pre-migration --namespace backup --confirm
 ```
 
 ## Resources

@@ -22,6 +22,7 @@ configuration:
         region: sa-vinhedo-1
         s3Url: https://axtwtiiyxgxz.compat.objectstorage.sa-vinhedo-1.oraclecloud.com
         s3ForcePathStyle: "true"
+        checksumAlgorithm: ""
   uploaderType: kopia
   defaultBackupStorageLocation: default
   defaultVolumesToFsBackup: true
