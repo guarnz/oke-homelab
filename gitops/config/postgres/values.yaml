@@ -1,5 +1,5 @@
 cluster:
-  instances: 2
+  instances: 1
   imageName: ghcr.io/cloudnative-pg/postgresql:18.4
   storage:
     size: 5Gi
