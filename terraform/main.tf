@@ -1,6 +1,7 @@
 module "networking" {
   source = "./modules/networking"
 
+  tenancy_id      = var.tenancy_id
   compartment_id  = var.compartment_id
   region          = var.region
   admin_public_ip = var.admin_public_ip

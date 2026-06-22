@@ -34,24 +34,24 @@ provider "registry.terraform.io/hashicorp/local" {
 }
 
 provider "registry.terraform.io/hashicorp/oci" {
-  version = "8.13.0"
+  version = "8.19.0"
   hashes = [
-    "h1:c6kNTSmsSeSCOBM8/5Hgt0VpSKyFgFgfY/CdvRyAm5Q=",
-    "zh:055ef341b3370d90b08f1ab56fdede11747c33a8a4f76c01382e80a9eac70c8f",
-    "zh:23713f132f34d0da9dbc11421d4b83d10f7fce677e1a5aafcf07619b12bf1a33",
-    "zh:443afc4c6183d6e9806d7414e4096a2669d0d3435118b37b7fd7bb5bc2596fa9",
-    "zh:579379341440d9be2fb82eeba58f7bb5874868b673c60cff8b8a50bea0747a74",
-    "zh:67a3a5df051e44e180e859bbef8480be10c0a9a7a719fb23abe545811cec3524",
-    "zh:7069d4bc824bf2dd3e6d476f86482bfb96c72ab465e3f770804e62af62935513",
-    "zh:7c6222cfb7f0a6ed330795457f40909e55b2736552767805f9b2bdf784bac1e1",
-    "zh:8346570c97b2f65787b475b2019c8ac7d96d142e9ecd99de85abd7ccf3518058",
+    "h1:+CJYg72ZrER5vF2ilr+kvpQy10hksUM0bUQrEDb+AXw=",
+    "zh:0d2df3e29ebf1d8e768559fa86f60e86293524e4e5e99cf84e7b695db63da86d",
+    "zh:295a791708c759688e5380417fad6a27531cd1315bb44b25c556f03c7b9e0d03",
+    "zh:3647850498f4f325578c1669d461aadcc169d3dde2cf58048bf09d7cc29cf2f7",
+    "zh:578c2d9498917a039bbe9ee608af897adee40a2bafeeead17e1376fee31915e3",
+    "zh:5d6cc84b1dc0fd0cfded3e5d7d8dd7215c8e85a84b43e0aa2c2f9253c20a05b6",
+    "zh:6a34be71f3d091647982c89239c45930ef2075918957924c51574d25a5de9cff",
+    "zh:85e0e0273dd3f24a0f1b40d53b0c28a4767c5c193a0fc0f580302c79b498a34d",
+    "zh:95f14a63e63d80fda595a16588890079f0d3813c9efd25a9cbbb0d2c9f0ed54c",
     "zh:9b12af85486a96aedd8d7984b0ff811a4b42e3d88dad1a3fb4c0b580d04fa425",
-    "zh:a87d6e48c3f4f97417380518aafe14e3a30d297bee163b2718ded0b8b78da5b5",
-    "zh:ae690079802ffae84c83774b36707765a4d79b17b5971faa1c46fe39f299e0e8",
-    "zh:b78eea21c5ab34d00f243f490e3744925a783c67882a027c53f4ef827349a630",
-    "zh:bc8b719cccfdd20ae8e055abb8ca7d9a27ad629f4904f163850a6e79c8c17482",
-    "zh:c58b39a86a320ab74d340fde48bf0d83fc6de4a790846eb5b91c69b0a6205ca6",
-    "zh:ee4cf6cbafa373bd50de976a0cd5c2429ca8b4c0879dea9831891063820c3a9c",
+    "zh:9b98b31b75db4f77b7674d739b36c6a1835f74179fd08946478f16f21f38d1fd",
+    "zh:b36ecc420be9f70da3f0b8e1f817d41876bf3bc6343747e0f397e88854e0c71d",
+    "zh:b6aa3f2085e5d8b8ad9808cb75c7a69cb392ca56d7f789ba375a9d057b093657",
+    "zh:cb52be156360270e42bba86196412b0393a1dd8610ffb17299c762827509e04f",
+    "zh:da9e16acb0c729f65319f2c7c754613c2d99407bca86c2dfdfa1701c1ebb08ca",
+    "zh:ed22df97b56077cdac4aa909db24be858755eefac7b0a68415411429fbf805c4",
   ]
 }
 
@@ -78,7 +78,7 @@ provider "registry.terraform.io/massdriver-cloud/jq" {
 
 provider "registry.terraform.io/oracle/oci" {
   version     = "8.19.0"
-  constraints = ">= 4.67.3, ~> 8.19.0"
+  constraints = ">= 4.67.3, >= 8.14.0, ~> 8.19.0"
   hashes = [
     "h1:+CJYg72ZrER5vF2ilr+kvpQy10hksUM0bUQrEDb+AXw=",
     "h1:7Sk2KLtnMd6yJqytFjHiQslGoRrj3YV8gHzMA40HOPY=",

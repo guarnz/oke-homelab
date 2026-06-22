@@ -1,3 +1,8 @@
+variable "tenancy_id" {
+  type        = string
+  description = "OCI tenancy OCID"
+}
+
 variable "compartment_id" {
   type        = string
   description = "OCI compartment (or tenancy) OCID where resources will be created"

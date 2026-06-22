@@ -2,6 +2,7 @@ module "vcn" {
   source  = "oracle-terraform-modules/vcn/oci"
   version = "4.0.0"
 
+  tenancy_id                   = var.tenancy_id
   compartment_id               = var.compartment_id
   region                       = var.region
   internet_gateway_route_rules = null
