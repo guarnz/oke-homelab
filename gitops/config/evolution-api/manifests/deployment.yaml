@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: evolution-api
+  namespace: apps
+  labels:
+    app: evolution-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: evolution-api
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: evolution-api
+    spec:
+      containers:
+        - name: evolution-api
+          image: docker.io/evoapicloud/evolution-api:v2.3.7
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - secretRef:
+                name: evolution-api-credentials
+          env:
+            - name: DOCKER_ENV
+              value: "true"
+            - name: SERVER_TYPE
+              value: "http"
+            - name: SERVER_PORT
+              value: "8080"
+            - name: SERVER_URL
+              value: "https://evolution.nieri0x73.com"
+            - name: DEL_INSTANCE
+              value: "false"
+            - name: DATABASE_ENABLED
+              value: "true"
+            - name: DATABASE_PROVIDER
+              value: "postgresql"
+            - name: DATABASE_CONNECTION_CLIENT_NAME
+              value: "evolution_v2"
+            - name: DATABASE_SAVE_DATA_INSTANCE
+              value: "true"
+            - name: DATABASE_SAVE_DATA_NEW_MESSAGE
+              value: "true"
+            - name: DATABASE_SAVE_MESSAGE_UPDATE
+              value: "true"
+            - name: DATABASE_SAVE_DATA_CONTACTS
+              value: "false"
+            - name: DATABASE_SAVE_DATA_CHATS
+              value: "false"
+            - name: BAILEYS_SYNC_FULL_HISTORY
+              value: "false"
+            - name: CONFIG_SESSION_PHONE_VERSION
+              value: "2.3000.1035194821"
+            - name: CACHE_LOCAL_ENABLED
+              value: "true"
+            - name: CACHE_REDIS_ENABLED
+              value: "false"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: QRCODE_LIMIT
+              value: "10"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
