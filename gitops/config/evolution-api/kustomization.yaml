@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - manifests/external-secret.yaml
+  - manifests/deployment.yaml
+  - manifests/service.yaml
+  - manifests/certificate.yaml
+  - manifests/gateway.yaml
+  - manifests/virtual-service.yaml
