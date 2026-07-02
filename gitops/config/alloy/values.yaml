@@ -97,34 +97,37 @@ alloy:
         }
       }
 
-      discovery.relabel "pod_logs" {
-        targets = discovery.kubernetes.pods.targets
-        rule {
-          source_labels = ["__meta_kubernetes_namespace"]
-          target_label  = "namespace"
-        }
-        rule {
-          source_labels = ["__meta_kubernetes_pod_name"]
-          target_label  = "pod"
-        }
-        rule {
-          source_labels = ["__meta_kubernetes_pod_container_name"]
-          target_label  = "container"
-        }
-        rule {
-          source_labels = ["__meta_kubernetes_pod_node_name"]
-          target_label  = "node"
-        }
-        rule {
-          source_labels = ["__meta_kubernetes_pod_node_name"]
-          regex         = env("HOSTNAME")
-          action        = "keep"
+      local.file_match "pod_logs" {
+        path_targets = [{
+          __path__ = "/var/log/pods/*/*/*.log",
+        }]
+      }
+
+      loki.process "pod_logs" {
+        forward_to = [loki.write.grafana_cloud.receiver]
+
+        stage.match {
+          selector = "{filename=~\".+\"}"
+          stage.regex {
+            expression = "/var/log/pods/(?P<namespace>[^_]+)_(?P<pod>[^_]+)_(?P<pod_uid>[^/]+)/(?P<container>[^/]+)/.+\\.log"
+            source     = "filename"
+          }
+          stage.labels {
+            values = {
+              namespace = "",
+              pod       = "",
+              container = "",
+            }
+          }
+          stage.label_drop {
+            values = ["filename"]
+          }
         }
       }
 
-      loki.source.kubernetes "pods" {
-        targets    = discovery.relabel.pod_logs.output
-        forward_to = [loki.write.grafana_cloud.receiver]
+      loki.source.file "pod_logs" {
+        targets    = local.file_match.pod_logs.targets
+        forward_to = [loki.process.pod_logs.receiver]
       }
 
       loki.write "grafana_cloud" {
@@ -142,6 +145,8 @@ alloy:
   envFrom:
     - secretRef:
         name: alloy-credentials
+  mounts:
+    varlog: true
   resources:
     requests:
       cpu: 50m
