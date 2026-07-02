@@ -79,9 +79,9 @@ Tuned tight to fit the OKE Free node budget while leaving headroom for the remot
 
 | Workload | requests.cpu | requests.memory | limits.cpu | limits.memory |
 |----------|--------------|-----------------|------------|---------------|
-| `alloy-metrics` | 50m | 128Mi | 300m | 384Mi |
-| `alloy-logs` | 50m | 128Mi | 200m | 256Mi |
-| `alloy-singleton` | 25m | 64Mi | 100m | 128Mi |
+| `alloy-metrics` | 100m | 256Mi | 500m | 512Mi |
+| `alloy-logs` | 50m | 192Mi | 300m | 384Mi |
+| `alloy-singleton` | 25m | 128Mi | 200m | 256Mi |
 | `kube-state-metrics` | 25m | 64Mi | 100m | 128Mi |
 | `prometheus-node-exporter` | 25m | 32Mi | 100m | 64Mi |
 

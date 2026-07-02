@@ -48,11 +48,11 @@ collectors:
     alloy:
       resources:
         requests:
-          cpu: 50m
-          memory: 128Mi
+          cpu: 100m
+          memory: 256Mi
         limits:
-          cpu: 300m
-          memory: 384Mi
+          cpu: 500m
+          memory: 512Mi
       envFrom:
         - secretRef:
             name: grafana-credentials
@@ -64,10 +64,10 @@ collectors:
       resources:
         requests:
           cpu: 50m
-          memory: 128Mi
+          memory: 192Mi
         limits:
-          cpu: 200m
-          memory: 256Mi
+          cpu: 300m
+          memory: 384Mi
       envFrom:
         - secretRef:
             name: grafana-credentials
@@ -77,10 +77,10 @@ collectors:
       resources:
         requests:
           cpu: 25m
-          memory: 64Mi
-        limits:
-          cpu: 100m
           memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
       envFrom:
         - secretRef:
             name: grafana-credentials
