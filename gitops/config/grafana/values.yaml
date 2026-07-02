@@ -26,6 +26,21 @@ destinations:
 clusterMetrics:
   enabled: true
   collector: alloy-metrics
+  kubelet:
+    metricsTuning:
+      useDefaultAllowList: false
+  kubeletResource:
+    metricsTuning:
+      useDefaultAllowList: false
+  cadvisor:
+    metricsTuning:
+      useDefaultAllowList: false
+  apiServer:
+    metricsTuning:
+      useDefaultAllowList: false
+  kube-state-metrics:
+    metricsTuning:
+      useDefaultAllowList: false
 hostMetrics:
   enabled: true
   collector: alloy-metrics
