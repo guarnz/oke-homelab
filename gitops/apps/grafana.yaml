@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: alloy
+  name: grafana
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "4"
@@ -14,15 +14,15 @@ spec:
       targetRevision: HEAD
       ref: values
     - repoURL: https://grafana.github.io/helm-charts
-      chart: alloy
-      targetRevision: 1.10.0
+      chart: k8s-monitoring
+      targetRevision: 4.1.7
       helm:
-        releaseName: alloy
+        releaseName: grafana
         valueFiles:
-          - $values/gitops/config/alloy/values.yaml
+          - $values/gitops/config/grafana/values.yaml
     - repoURL: https://github.com/nieri0x73/oci-free-k8s
       targetRevision: HEAD
-      path: gitops/config/alloy/manifests
+      path: gitops/config/grafana/manifests
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
