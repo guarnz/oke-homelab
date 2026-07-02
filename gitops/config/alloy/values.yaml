@@ -18,7 +18,7 @@ alloy:
       discovery.relabel "cadvisor" {
         targets = discovery.kubernetes.nodes.targets
         rule {
-          replacement  = "/api/v1/nodes/" + env("HOSTNAME") + "/proxy/metrics/cadvisor"
+          replacement  = "/api/v1/nodes/" + sys.env("HOSTNAME") + "/proxy/metrics/cadvisor"
           target_label = "__metrics_path__"
         }
         rule {
@@ -86,10 +86,10 @@ alloy:
 
       prometheus.remote_write "mimir" {
         endpoint {
-          url = env("MIMIR_URL")
+          url = sys.env("MIMIR_URL")
           basic_auth {
-            username = env("MIMIR_USERNAME")
-            password = env("MIMIR_PASSWORD")
+            username = sys.env("MIMIR_USERNAME")
+            password = sys.env("MIMIR_PASSWORD")
           }
         }
         external_labels = {
@@ -132,10 +132,10 @@ alloy:
 
       loki.write "grafana_cloud" {
         endpoint {
-          url = env("LOKI_URL")
+          url = sys.env("LOKI_URL")
           basic_auth {
-            username = env("LOKI_USERNAME")
-            password = env("LOKI_PASSWORD")
+            username = sys.env("LOKI_USERNAME")
+            password = sys.env("LOKI_PASSWORD")
           }
         }
         external_labels = {
