@@ -29,6 +29,8 @@ clusterMetrics:
 hostMetrics:
   enabled: true
   collector: alloy-metrics
+  linuxHosts:
+    enabled: true
 clusterEvents:
   enabled: true
   collector: alloy-singleton
