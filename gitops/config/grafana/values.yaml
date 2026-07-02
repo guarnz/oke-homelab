@@ -26,6 +26,9 @@ destinations:
 clusterMetrics:
   enabled: true
   collector: alloy-metrics
+hostMetrics:
+  enabled: true
+  collector: alloy-metrics
 clusterEvents:
   enabled: true
   collector: alloy-singleton
