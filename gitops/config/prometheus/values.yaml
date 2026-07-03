@@ -1,11 +1,51 @@
 crds:
   enabled: true
 defaultRules:
-  create: false
+  create: true
+  rules:
+    etcd: false
+    kubeControllerManager: false
+    kubeSchedulerAlerting: false
+    kubeSchedulerRecording: false
+    kubeProxy: false
 alertmanager:
   enabled: false
 grafana:
-  enabled: false
+  enabled: true
+  admin:
+    existingSecret: prometheus-credentials
+    userKey: GRAFANA_ADMIN_USER
+    passwordKey: GRAFANA_ADMIN_PASSWORD
+  defaultDashboardsEnabled: true
+  defaultDashboardsTimezone: America/Sao_Paulo
+  grafana.ini:
+    server:
+      root_url: https://monitoring.nieri0x73.com
+    security:
+      cookie_secure: true
+    users:
+      allow_sign_up: false
+  persistence:
+    enabled: true
+    type: pvc
+    storageClassName: longhorn
+    size: 5Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  service:
+    type: ClusterIP
+    port: 80
+  sidecar:
+    dashboards:
+      enabled: true
+      searchNamespace: ALL
+    datasources:
+      enabled: true
 kubernetesServiceMonitors:
   enabled: true
 kubeApiServer:
@@ -70,10 +110,11 @@ thanosRuler:
   enabled: false
 prometheus:
   enabled: true
-  agentMode: true
   prometheusSpec:
     replicas: 1
     shards: 1
+    retention: 15d
+    retentionSize: 12GB
     externalLabels:
       cluster: oci-free-k8s
     scrapeInterval: 60s
@@ -82,19 +123,20 @@ prometheus:
     podMonitorSelectorNilUsesHelmValues: false
     probeSelectorNilUsesHelmValues: false
     scrapeConfigSelectorNilUsesHelmValues: false
-    remoteWrite:
-      - url: https://prometheus-prod-40-prod-sa-east-1.grafana.net/api/prom/push
-        basicAuth:
-          username:
-            name: prometheus-credentials
-            key: PROMETHEUS_USERNAME
-          password:
-            name: prometheus-credentials
-            key: PROMETHEUS_PASSWORD
+    ruleSelectorNilUsesHelmValues: false
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 15Gi
     resources:
       requests:
-        cpu: 100m
-        memory: 256Mi
-      limits:
-        cpu: 500m
+        cpu: 200m
         memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1536Mi

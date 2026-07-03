@@ -1,6 +1,14 @@
-# Prometheus (kube-prometheus-stack, agent mode)
+# Prometheus + Grafana (kube-prometheus-stack)
 
-Cluster metrics collection deployed via the [prometheus-community/kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack) Helm chart. Runs Prometheus in **agent mode** — no local TSDB, no query API, no Prometheus UI, no Alertmanager, no bundled Grafana. Scrapes the cluster and remote-writes everything to Grafana Cloud.
+Self-hosted metrics stack deployed via the [prometheus-community/kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack) Helm chart. Runs Prometheus in **server mode** with a local TSDB, kube-state-metrics, node-exporter and Grafana — everything the cluster needs to be observed without a managed backend.
+
+## Access
+
+| URL | Description |
+|-----|-------------|
+| `https://<your-domain>` | Grafana UI |
+
+The `manifests/` directory contains the Istio Gateway, VirtualService and cert-manager Certificate. Update the domain in these files to match your own FQDN before deploying.
 
 ## What it deploys
 
@@ -8,64 +16,55 @@ The chart brings up the following workloads in the `monitoring` namespace:
 
 | Workload | Kind | Role |
 |----------|------|------|
-| `prometheus-kube-prometheus-operator` | Deployment | Prometheus Operator — reconciles the PrometheusAgent CR and all `ServiceMonitor`/`PodMonitor` resources across the cluster |
-| `prometheus-prometheus-kube-prometheus-prometheus` | StatefulSet | Prometheus Agent that scrapes and forwards to Grafana Cloud via `remote_write` |
-| `prometheus-kube-state-metrics` | Deployment | Exposes Kubernetes object state metrics (Deployments, Pods, PVCs, Jobs, Nodes, Ingresses) — scraped via a chart-provided ServiceMonitor |
-| `prometheus-prometheus-node-exporter` | DaemonSet | Exposes host-level Linux metrics (CPU, memory, disk, filesystem, network) — scraped via a chart-provided ServiceMonitor |
-
-All samples carry an `external_labels` `cluster="oci-free-k8s"` so multiple clusters can share the same Grafana Cloud stack.
-
-## Why agent mode
-
-Prometheus in **agent mode** does not run a TSDB, does not expose the query API and does not serve the Prometheus UI. The only job is to scrape targets and push samples to a remote destination via `remote_write`. Since Grafana Cloud is the single source of truth for querying metrics on this cluster, keeping a full Prometheus Server locally would only add memory pressure and a persistent volume for a TSDB nobody queries. Agent mode keeps the operator and `ServiceMonitor`/`PodMonitor` UX from the ecosystem while cutting the Prometheus pod down to a plain forwarder (~256Mi–512Mi and no PVC).
+| `prometheus-kube-prometheus-operator` | Deployment | Prometheus Operator — reconciles the Prometheus CR and every `ServiceMonitor`/`PodMonitor` created cluster-wide |
+| `prometheus-prometheus-kube-prometheus-prometheus` | StatefulSet | Prometheus Server (local TSDB, 15d retention) that scrapes cluster targets |
+| `prometheus-grafana` | Deployment | Grafana UI with Prometheus datasource pre-configured |
+| `prometheus-kube-state-metrics` | Deployment | Exposes Kubernetes object state metrics |
+| `prometheus-prometheus-node-exporter` | DaemonSet | Exposes host-level Linux metrics |
 
 ## What is intentionally disabled
 
-The chart bundles a full observability stack; this deployment deliberately turns most of it off to keep the footprint tight and avoid duplicating what the cluster already runs:
+The chart bundles a full observability stack; components that are not used are turned off explicitly:
 
 | Component | Why disabled |
 |-----------|--------------|
-| `alertmanager` | Alerts run in Grafana Cloud Alerting |
-| `grafana` | Grafana Cloud is the UI |
-| `thanosRuler` | Not needed with agent mode |
-| `defaultRules` | Alert rules are managed in Grafana Cloud |
+| `alertmanager` | Alerting will be handled separately |
+| `thanosRuler` | Not needed for single-cluster setup |
 | `kubeControllerManager` / `kubeScheduler` / `kubeProxy` / `kubeEtcd` / `kubeDns` | Managed control plane on OKE — not exposed to scraping |
 
 ## Vault Secret
 
-The `remote_write` endpoint credentials are stored in HashiCorp Vault at path `secret/grafana` and synced to the Kubernetes secret `prometheus-credentials` via External Secrets Operator. The `PrometheusAgent` CR references the Secret keys directly (`basicAuth.username.key` and `basicAuth.password.key`), so the token never lands on disk in a ConfigMap — the operator wires it into the Prometheus pod as a projected volume at runtime.
+The Grafana admin credentials are stored in HashiCorp Vault at path `secret/grafana` and synced to the Kubernetes secret `prometheus-credentials` via External Secrets Operator. Grafana reads the username/password directly from that Secret via the `admin.existingSecret` field of the chart.
 
 ### Required keys
 
 | Key | Description | Example |
 |-----|-------------|---------|
-| `PROMETHEUS_USERNAME` | Grafana Cloud Metrics instance ID (numeric) | `1234567` |
-| `PROMETHEUS_PASSWORD` | Grafana Cloud API token with `metrics:write` scope | `glc_...` |
-
-The `PROMETHEUS_URL` value is baked into `values.yaml` because it is not sensitive (the endpoint appears in every failed request log line). Additional keys stored on the same Vault path (`LOKI_URL`, `LOKI_USERNAME`, `LOKI_PASSWORD`) are ignored by this app and are consumed by whichever tool eventually ships logs to Grafana Cloud Loki.
-
-### Where to find each value
-
-1. Log in at [grafana.com](https://grafana.com) and open your stack.
-2. Go to **Home → Connections → Add new connection → Hosted Prometheus metrics**.
-3. Copy:
-   - **Username / Instance ID** → `PROMETHEUS_USERNAME`
-   - Click **Generate now** to create an access policy with the `metrics:write` scope and copy the returned token — that is `PROMETHEUS_PASSWORD` (shown once).
-4. The **Remote Write Endpoint** shown on the same screen matches the `remoteWrite.url` set in `values.yaml` — bump it here whenever you rotate stacks or regions.
+| `GRAFANA_ADMIN_USER` | Grafana admin username | `admin` |
+| `GRAFANA_ADMIN_PASSWORD` | Grafana admin password | `long-random-string` |
 
 ### Populating Vault
 
 ```bash
-vault kv put secret/grafana \
-  PROMETHEUS_USERNAME='1234567' \
-  PROMETHEUS_PASSWORD='glc_...'
+vault kv patch secret/grafana \
+  GRAFANA_ADMIN_USER='admin' \
+  GRAFANA_ADMIN_PASSWORD="$(openssl rand -base64 32)"
 ```
 
-Use `vault kv patch secret/grafana ...` to add these keys without touching other values already stored on the same path.
+## Storage
+
+Both Prometheus and Grafana persist data on Longhorn PVCs.
+
+| Workload | PVC | Retention |
+|----------|-----|-----------|
+| Prometheus TSDB | 15Gi | 15 days (or 12GB soft limit, whichever comes first) |
+| Grafana | 5Gi | permanent |
+
+At the current cluster workload count (~15-20 pods, ~7-10k active series) 15Gi covers roughly 30 days of samples with the 15d retention as an upper bound. If the disk fills up, Prometheus stops accepting new samples until compaction reclaims space — the `retentionSize: 12GB` acts as a soft ceiling and starts dropping the oldest blocks before the volume is exhausted.
 
 ## Adding new scrape targets
 
-The Prometheus Agent is configured with `serviceMonitorSelectorNilUsesHelmValues: false` and the equivalent flags for `PodMonitor`, `Probe` and `ScrapeConfig`, which means **any `ServiceMonitor` or `PodMonitor` created in any namespace is picked up automatically** (no `release: prometheus` label required).
+Prometheus is configured with `serviceMonitorSelectorNilUsesHelmValues: false` and the equivalent flags for `PodMonitor`, `Probe` and `ScrapeConfig`, which means **any `ServiceMonitor` or `PodMonitor` created in any namespace is picked up automatically** (no `release: prometheus` label required).
 
 To onboard a new app:
 
@@ -87,26 +86,27 @@ spec:
       interval: 60s
 ```
 
-The operator will detect it within seconds, add it to the Prometheus Agent config and start remote-writing the samples to Grafana Cloud. No values.yaml change needed.
+The operator will detect it within seconds, add it to the Prometheus config and start scraping.
 
 ## Resources
 
-Tuned tight to fit the OKE Free node budget while leaving headroom for the `remote_write` WAL when Grafana Cloud is briefly slow.
+Tuned for the OKE Free node budget.
 
 | Workload | requests.cpu | requests.memory | limits.cpu | limits.memory |
 |----------|--------------|-----------------|------------|---------------|
 | `prometheus-operator` | 50m | 128Mi | 200m | 256Mi |
-| `prometheus-agent` | 100m | 256Mi | 500m | 512Mi |
+| `prometheus` | 200m | 512Mi | 1000m | 1536Mi |
+| `grafana` | 50m | 128Mi | 200m | 256Mi |
 | `kube-state-metrics` | 25m | 64Mi | 100m | 128Mi |
 | `prometheus-node-exporter` | 25m | 32Mi | 100m | 64Mi |
 | `admission webhook patch job` | 10m | 32Mi | 100m | 64Mi |
 
-If the Prometheus Agent starts truncating its WAL under load, bump `prometheus.agent.prometheusSpec.resources.limits.memory` first — the WAL fits in whatever RAM is left over after the Go heap.
+Prometheus memory is the main lever — if scrape targets grow, bump `prometheus.prometheusSpec.resources.limits.memory` first.
 
 ## Notes
 
-- **Agent mode CRD** — the operator provisions a `PrometheusAgent` (not `Prometheus`) resource. It has no `retention`, no `storage`, no `alerting` fields — anything that only makes sense with a local TSDB is intentionally missing from the CR.
-- **CRDs are installed by this chart** — `crds.enabled: true` makes the chart apply the Prometheus Operator CRDs (`Prometheus`, `PrometheusAgent`, `ServiceMonitor`, `PodMonitor`, `Probe`, `PrometheusRule`, `AlertmanagerConfig`, etc.) directly. No separate CRD chart is needed and Renovate updates them together with the operator.
-- **`cluster="oci-free-k8s"` external label** stamped on every remote_write sample so future multi-cluster setups filter cleanly.
-- **RBAC** is created automatically by the chart. The operator needs cluster-wide read on ServiceMonitors and their targets; kube-state-metrics needs read access to most object types; node-exporter reads `/proc`, `/sys` and `/rootfs` from the host.
-- **Chart version** is pinned at the Application level (`gitops/apps/prometheus.yaml`). Renovate opens a PR when a new version drops upstream.
+- **Prometheus datasource is auto-provisioned** in Grafana by the chart, pointing at the internal `http://prometheus-operated:9090` service. No manual configuration needed.
+- **Default Kubernetes dashboards** are provisioned automatically via `grafana.defaultDashboardsEnabled: true` (~15 dashboards covering nodes, pods, deployments, kubelet, apiserver).
+- **Dashboard sidecar** watches all namespaces for ConfigMaps labelled `grafana_dashboard: "1"` and imports them automatically — drop a ConfigMap next to any app to add its dashboard.
+- **`external_labels.cluster = oci-free-k8s`** stamped on every sample so multi-cluster setups filter cleanly in the future.
+- **CRDs are installed by this chart** (`crds.enabled: true`) and upgrade in lockstep with the operator via Renovate.
