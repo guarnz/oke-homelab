@@ -1,0 +1,100 @@
+crds:
+  enabled: true
+defaultRules:
+  create: false
+alertmanager:
+  enabled: false
+grafana:
+  enabled: false
+kubernetesServiceMonitors:
+  enabled: true
+kubeApiServer:
+  enabled: true
+kubelet:
+  enabled: true
+  serviceMonitor:
+    cAdvisor: true
+    probes: true
+    resource: true
+kubeControllerManager:
+  enabled: false
+coreDns:
+  enabled: true
+kubeDns:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+kubeStateMetrics:
+  enabled: true
+kube-state-metrics:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+nodeExporter:
+  enabled: true
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+prometheusOperator:
+  enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  admissionWebhooks:
+    patch:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+thanosRuler:
+  enabled: false
+prometheus:
+  enabled: true
+  agentMode: true
+  prometheusSpec:
+    replicas: 1
+    shards: 1
+    externalLabels:
+      cluster: oci-free-k8s
+    scrapeInterval: 60s
+    scrapeTimeout: 10s
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    scrapeConfigSelectorNilUsesHelmValues: false
+    remoteWrite:
+      - url: https://prometheus-prod-40-prod-sa-east-1.grafana.net/api/prom/push
+        basicAuth:
+          username:
+            name: prometheus-credentials
+            key: PROMETHEUS_USERNAME
+          password:
+            name: prometheus-credentials
+            key: PROMETHEUS_PASSWORD
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
