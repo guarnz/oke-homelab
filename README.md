@@ -147,6 +147,27 @@ kubectl exec -n security vault-0 -- vault kv put secret/vaultwarden ADMIN_TOKEN=
 # See each app README for required secret keys
 ```
 
+### 6. Private Git Repositories (optional)
+
+If any ArgoCD Application points to a private repository, register credentials in Vault at `secret/argocd-repo`. The ExternalSecret in `gitops/bootstrap/argocd/manifests/external-secret.yaml` renders a `repo-creds`-typed Secret that ArgoCD picks up automatically for every repo URL matching the stored prefix.
+
+Required keys in `secret/argocd-repo`:
+
+| Key | Value |
+|-----|-------|
+| `type` | `git` |
+| `url` | URL prefix that matches every private repo (e.g. `https://github.com/<user>`) |
+| `username` | Git username |
+| `password` | Personal Access Token with `repo` scope |
+
+```bash
+kubectl exec -n security vault-0 -- vault kv put secret/argocd-repo \
+  type=git \
+  url=https://github.com/<user> \
+  username=<user> \
+  password=<github-pat>
+```
+
 ## Contributing
 
 Contributions are welcome! Feel free to open issues or pull requests to improve this project.
