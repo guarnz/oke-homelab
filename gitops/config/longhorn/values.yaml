@@ -3,6 +3,7 @@ preUpgradeChecker:
 defaultSettings:
   defaultReplicaCount: 2
   storageMinimalAvailablePercentage: 10
+  storageReservedPercentageForDefaultDisk: 5
   nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
   autoDeletePodWhenVolumeDetachedUnexpectedly: true
   guaranteedInstanceManagerCPU: 5
