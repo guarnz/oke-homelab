@@ -8,8 +8,8 @@ module "vcn" {
   internet_gateway_route_rules = null
   local_peering_gateways       = null
   nat_gateway_route_rules      = null
-  vcn_name                     = "k8s-vcn"
-  vcn_dns_label                = "k8svcn"
+  vcn_name                     = "vcn-oracle"
+  vcn_dns_label                = "oci"
   vcn_cidrs                    = ["10.0.0.0/16"]
   create_internet_gateway      = true
   create_nat_gateway           = true
@@ -22,7 +22,7 @@ resource "oci_core_subnet" "public" {
   cidr_block        = "10.0.0.0/24"
   route_table_id    = module.vcn.ig_route_id
   security_list_ids = [oci_core_security_list.public.id]
-  display_name      = "k8s-public-subnet"
+  display_name      = "subnet-public"
 }
 
 resource "oci_core_subnet" "private_1" {
@@ -34,7 +34,7 @@ resource "oci_core_subnet" "private_1" {
     oci_core_security_list.private.id,
     oci_core_security_list.nlb_private.id,
   ]
-  display_name               = "k8s-private-subnet-1"
+  display_name               = "subnet-private-1"
   prohibit_public_ip_on_vnic = true
 }
 
@@ -47,14 +47,14 @@ resource "oci_core_subnet" "private_2" {
     oci_core_security_list.private.id,
     oci_core_security_list.nlb_private.id,
   ]
-  display_name               = "k8s-private-subnet-2"
+  display_name               = "subnet-private-2"
   prohibit_public_ip_on_vnic = true
 }
 
 resource "oci_core_security_list" "public" {
   compartment_id = var.compartment_id
   vcn_id         = module.vcn.vcn_id
-  display_name   = "k8s-public-subnet-sl"
+  display_name   = "sl-public-subnet"
 
   egress_security_rules {
     stateless        = false
@@ -107,7 +107,7 @@ resource "oci_core_security_list" "public" {
 resource "oci_core_security_list" "private" {
   compartment_id = var.compartment_id
   vcn_id         = module.vcn.vcn_id
-  display_name   = "k8s-private-subnet-sl"
+  display_name   = "sl-private-subnet"
 
   egress_security_rules {
     stateless        = false
@@ -127,7 +127,7 @@ resource "oci_core_security_list" "private" {
 resource "oci_core_security_list" "nlb_private" {
   compartment_id = var.compartment_id
   vcn_id         = module.vcn.vcn_id
-  display_name   = "nlb-k8s-private-subnet-sl"
+  display_name   = "sl-nlb-private-subnet"
 
   ingress_security_rules {
     stateless   = false
