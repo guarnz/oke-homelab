@@ -61,14 +61,14 @@ resource "oci_containerengine_node_pool" "this" {
   node_shape = "VM.Standard.A1.Flex"
 
   node_shape_config {
-    memory_in_gbs = 6
-    ocpus         = 1
+    memory_in_gbs = 12
+    ocpus         = 2
   }
 
   node_source_details {
     image_id                = jsondecode(data.jq_query.latest_image.result)
     source_type             = "image"
-    boot_volume_size_in_gbs = 60
+    boot_volume_size_in_gbs = 70
   }
 
   initial_node_labels {
