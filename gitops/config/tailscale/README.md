@@ -17,29 +17,38 @@ The operator creates a proxy device for each exposed Service (tagged `tag:k8s`),
 
 ## Prerequisites
 
-The operator registers itself as `tag:k8s-operator` and tags the proxies it creates as `tag:k8s`. Both must be declared in the tailnet ACL (Access Controls):
+The operator registers itself as `tag:k8s-operator` and tags the proxies it creates as `tag:k8s`.
+
+### 1. Create the tags
+
+Under **Access controls → Tags**, create both tags (this writes them to `tagOwners` automatically):
+
+- `k8s-operator`
+- `k8s` — owned by `k8s-operator`
+
+### 2. Create the OAuth client
+
+Under **Settings → Trust credentials → Credential → OAuth**:
+
+- Scopes: enable **Devices → Core → Write** and **Keys → Auth Keys → Write** (the operator generates auth keys to register itself and its proxies; without the Auth Keys scope it fails with a `403`)
+- Tags: add `tag:k8s-operator` on both scopes
+
+Copy the resulting Client ID and Client Secret into Vault (see below); the secret is shown only once.
+
+### 3. Fix the operator tag owner (JSON editor)
+
+Creating the OAuth client rewrites `tagOwners` and leaves `tag:k8s-operator` without a valid owner for the client. The visual editor cannot make a tag own itself, so edit the policy file directly (**Access controls → JSON editor**) and set `tag:k8s-operator` to be owned by itself:
 
 ```json
 {
   "tagOwners": {
-    "tag:k8s-operator": ["autogroup:admin"],
+    "tag:k8s-operator": ["tag:k8s-operator"],
     "tag:k8s": ["tag:k8s-operator"]
   }
 }
 ```
 
-`tag:k8s-operator` identifies the operator itself (only an admin may apply it, done once during OAuth registration). `tag:k8s` identifies the proxy devices; the delegation `["tag:k8s-operator"]` lets the operator tag its own proxies without manual intervention.
-
-Create the tags first (Access controls → Tags), in order: `k8s-operator` owned by `autogroup:admin`, then `k8s` owned by `k8s-operator`. The OAuth client below cannot reference `tag:k8s` until it exists.
-
-### OAuth client
-
-Create the client the operator authenticates with, under **Settings → Trust credentials → Credential → OAuth**:
-
-- Scopes: expand **Devices** and enable **Core → Write**
-- Tags: add `tag:k8s` (required for the write scope; this is the tag the operator assigns to the proxies it creates)
-
-Copy the resulting Client ID and Client Secret into Vault (see below); the secret is shown only once.
+The operator authenticates with an OAuth client that carries `tag:k8s-operator`, and to create its own registration auth key it must own that tag — so the tag has to list itself as owner. Owning it with `autogroup:admin` (or an empty list) instead makes the operator fail with `creating operator authkey: requested tags [tag:k8s-operator] are invalid or not permitted (400)`. `tag:k8s` is owned by `tag:k8s-operator`, so the operator can tag the proxies it creates.
 
 ## Vault Secret
 
