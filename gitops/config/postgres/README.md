@@ -44,3 +44,13 @@ Use the read-write service for writes and the read-only service for reads:
 |---------|-------------|
 | `postgres-cluster-rw.databases` | Read-write (primary) |
 | `postgres-cluster-ro.databases` | Read-only (replicas) |
+
+## Remote Access over Tailscale
+
+`manifests/tailscale-service.yaml` defines an extra `postgres-tailscale` service that targets the primary and is exposed on the tailnet by the [Tailscale operator](../tailscale/README.md), tagged `tag:shared`. It is reachable from any tailnet device allowed to access `tag:shared` at:
+
+```
+postgres.<tailnet>.ts.net:5432
+```
+
+CloudNativePG does not allow annotating the built-in `rw`/`ro`/`r` services, so this is a separate service selecting the primary pod directly.

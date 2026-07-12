@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-tailscale
+  namespace: databases
+  annotations:
+    tailscale.com/expose: "true"
+    tailscale.com/hostname: postgres
+    tailscale.com/tags: tag:shared
+spec:
+  type: ClusterIP
+  selector:
+    cnpg.io/cluster: postgres-cluster
+    cnpg.io/instanceRole: primary
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
