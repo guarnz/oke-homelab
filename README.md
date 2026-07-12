@@ -27,6 +27,7 @@ Enterprise-grade architecture running at **zero cost**, made possible by the OCI
 | [External Secrets](gitops/config/external-secrets/README.md) | Sync Vault secrets to Kubernetes |
 | [Cert Manager](gitops/config/cert-manager/README.md) | Automatic TLS certificates via Let's Encrypt |
 | [ExternalDNS](gitops/config/external-dns/README.md) | Automatic DNS records in Cloudflare |
+| [Tailscale Operator](gitops/config/tailscale/README.md) | Private access to cluster Services over the tailnet |
 | [Longhorn](gitops/config/longhorn/README.md) | Distributed block storage |
 | [CloudNativePG](gitops/config/cloudnativepg/) | PostgreSQL operator |
 | [PostgreSQL](gitops/config/postgres/README.md) | PostgreSQL cluster |
@@ -35,6 +36,7 @@ Enterprise-grade architecture running at **zero cost**, made possible by the OCI
 | [N8N](gitops/config/n8n/README.md) | Workflow automation |
 | [Firefly III](gitops/config/firefly/README.md) | Self-hosted personal finance manager |
 | [Metrics Server](gitops/config/metrics-server/README.md) | Resource metrics for HPA and kubectl top |
+| [Prometheus](gitops/config/prometheus/README.md) | Metrics collection with Grafana dashboards |
 
 ## Structure
 

@@ -1,0 +1,6 @@
+operatorConfig:
+  hostname: tailscale-operator
+apiServerProxyConfig:
+  mode: "true"
+proxyConfig:
+  defaultTags: "tag:k8s"
