@@ -1,6 +1,10 @@
 operatorConfig:
   hostname: tailscale-operator
+  image:
+    repository: docker.io/tailscale/k8s-operator
 apiServerProxyConfig:
   mode: "true"
 proxyConfig:
   defaultTags: "tag:k8s"
+  image:
+    repository: docker.io/tailscale/tailscale
