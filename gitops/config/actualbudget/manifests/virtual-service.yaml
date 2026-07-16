@@ -1,16 +1,16 @@
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: firefly-importer
+  name: actualbudget
   namespace: apps
 spec:
   hosts:
-    - finance-importer.nieri0x73.com
+    - finance.nieri0x73.com
   gateways:
-    - firefly
+    - actualbudget
   http:
     - route:
         - destination:
-            host: finance-importer
+            host: actualbudget
             port:
-              number: 80
+              number: 5006

@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: firefly
+  name: actualbudget
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "4"
@@ -13,16 +13,16 @@ spec:
     - repoURL: https://github.com/nieri0x73/oci-free-k8s
       targetRevision: HEAD
       ref: values
-    - repoURL: https://firefly-iii.github.io/kubernetes/
-      chart: firefly-iii-stack
-      targetRevision: 0.10.1
+    - repoURL: https://community-charts.github.io/helm-charts
+      chart: actualbudget
+      targetRevision: 1.9.1
       helm:
-        releaseName: finance
+        releaseName: actualbudget
         valueFiles:
-          - $values/gitops/config/firefly/values.yaml
+          - $values/gitops/config/actualbudget/values.yaml
     - repoURL: https://github.com/nieri0x73/oci-free-k8s
       targetRevision: HEAD
-      path: gitops/config/firefly/manifests
+      path: gitops/config/actualbudget/manifests
   destination:
     server: https://kubernetes.default.svc
     namespace: apps

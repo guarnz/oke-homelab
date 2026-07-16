@@ -1,0 +1,22 @@
+image:
+  repository: docker.io/actualbudget/actual-server
+login:
+  method: password
+  allowedLoginMethods:
+    - password
+persistence:
+  enabled: true
+  storageClass: longhorn
+  accessModes:
+    - ReadWriteOnce
+  size: 1Gi
+extraEnvVars:
+  TZ: America/Sao_Paulo
+  ACTUAL_TRUSTED_PROXIES: 0.0.0.0/0
+resources:
+  requests:
+    cpu: 25m
+    memory: 128Mi
+  limits:
+    cpu: 300m
+    memory: 384Mi

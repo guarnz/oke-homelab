@@ -1,10 +1,10 @@
 apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
-  name: firefly
+  name: actualbudget
   namespace: apps
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: finance.nieri0x73.com,finance-importer.nieri0x73.com
+    external-dns.alpha.kubernetes.io/hostname: finance.nieri0x73.com
 spec:
   selector:
     istio: ingressgateway
@@ -15,10 +15,9 @@ spec:
         protocol: HTTPS
       tls:
         mode: SIMPLE
-        credentialName: firefly-tls
+        credentialName: actualbudget-tls
       hosts:
         - finance.nieri0x73.com
-        - finance-importer.nieri0x73.com
     - port:
         number: 80
         name: http
@@ -27,4 +26,3 @@ spec:
         httpsRedirect: true
       hosts:
         - finance.nieri0x73.com
-        - finance-importer.nieri0x73.com
