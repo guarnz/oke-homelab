@@ -27,7 +27,6 @@ Deployment-level configuration lives in `values.yaml` under `extraEnvVars`. Keys
 | Variable | Value | Purpose |
 |----------|-------|---------|
 | `TZ` | `America/Sao_Paulo` | Container timezone |
-| `ACTUAL_TRUSTED_PROXIES` | `0.0.0.0/0` | Trusts the `X-Forwarded-For` header set by the Istio Ingress Gateway so client IPs are logged correctly |
 
 For the full catalogue of env vars see the [official reference](https://actualbudget.org/docs/config/).
 

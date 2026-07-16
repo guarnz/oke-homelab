@@ -12,7 +12,6 @@ persistence:
   size: 1Gi
 extraEnvVars:
   TZ: America/Sao_Paulo
-  ACTUAL_TRUSTED_PROXIES: 0.0.0.0/0
 resources:
   requests:
     cpu: 25m
