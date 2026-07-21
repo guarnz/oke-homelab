@@ -1,0 +1,28 @@
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: vikunja
+  namespace: apps
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: planner.nieri0x73.com
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: vikunja-tls
+      hosts:
+        - planner.nieri0x73.com
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      tls:
+        httpsRedirect: true
+      hosts:
+        - planner.nieri0x73.com
