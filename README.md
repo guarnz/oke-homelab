@@ -35,6 +35,7 @@ Enterprise-grade architecture running at **zero cost**, made possible by the OCI
 | [Vaultwarden](gitops/config/vaultwarden/README.md) | Self-hosted password manager |
 | [N8N](gitops/config/n8n/README.md) | Workflow automation |
 | [Actual Budget](gitops/config/actualbudget/README.md) | Local-first personal finance app |
+| [Vikunja](gitops/config/vikunja/README.md) | Self-hosted task and project management |
 | [Metrics Server](gitops/config/metrics-server/README.md) | Resource metrics for HPA and kubectl top |
 | [Prometheus](gitops/config/prometheus/README.md) | Metrics collection with Grafana dashboards |
 
