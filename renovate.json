@@ -17,8 +17,9 @@
   },
   "timezone": "America/Sao_Paulo",
   "schedule": [
-    "after 3am and before 7am on Monday"
+    "after 3am and before 4am every weekday"
   ],
+  "prHourlyLimit": 3,
   "packageRules": [
     {
       "matchManagers": ["pre-commit"],
