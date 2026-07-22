@@ -17,7 +17,7 @@
   },
   "timezone": "America/Sao_Paulo",
   "schedule": [
-    "after 3am and before 4am every weekday"
+    "after 12am and before 6am every weekday"
   ],
   "prHourlyLimit": 3,
   "packageRules": [
