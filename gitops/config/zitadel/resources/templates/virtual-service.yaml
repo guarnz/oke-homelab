@@ -1,0 +1,24 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: zitadel
+  namespace: {{ .Values.namespace }}
+spec:
+  hosts:
+    - {{ include "zitadel-resources.host" . }}
+  gateways:
+    - zitadel
+  http:
+    - match:
+        - uri:
+            prefix: /ui/v2/login
+      route:
+        - destination:
+            host: zitadel-login
+            port:
+              number: 3000
+    - route:
+        - destination:
+            host: zitadel
+            port:
+              number: 8080

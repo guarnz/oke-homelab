@@ -1,0 +1,4 @@
+global:
+  domain: guarnz.com
+  email: admin@guarnz.com
+  issuer: letsencrypt-dns01

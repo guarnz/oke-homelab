@@ -1,7 +1,6 @@
 zitadel:
   masterkeySecretName: zitadel-credentials
   configmapConfig:
-    ExternalDomain: iam.nieri0x73.com
     ExternalSecure: true
     ExternalPort: 443
     TLS:
@@ -25,13 +24,11 @@ zitadel:
             Mode: disable
     FirstInstance:
       Org:
-        Name: nieri0x73
         Human:
           UserName: admin
           FirstName: Admin
           LastName: User
           Email:
-            Address: admin@nieri0x73.com
             Verified: true
           PasswordChangeRequired: true
   resources:
@@ -41,21 +38,6 @@ zitadel:
     limits:
       cpu: 500m
       memory: 512Mi
-env:
-  - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: zitadel-credentials
-        key: password
-  - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: zitadel-credentials
-        key: postgres-password
-  - name: ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: zitadel-credentials
-        key: admin-password
+envVarsSecret: zitadel-credentials
 postgresql:
   enabled: false
