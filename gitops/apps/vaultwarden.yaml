@@ -10,7 +10,7 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oci-free-k8s
       targetRevision: HEAD
       ref: values
     - repoURL: https://guerzon.github.io/vaultwarden
@@ -20,9 +20,13 @@ spec:
         releaseName: vaultwarden
         valueFiles:
           - $values/gitops/config/vaultwarden/values.yaml
-    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oci-free-k8s
       targetRevision: HEAD
-      path: gitops/config/vaultwarden/manifests
+      path: gitops/config/vaultwarden/resources
+      helm:
+        releaseName: vaultwarden-resources
+        valueFiles:
+          - $values/gitops/global-values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: apps

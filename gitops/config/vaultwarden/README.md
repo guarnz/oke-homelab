@@ -9,17 +9,19 @@ Password manager deployed via the [guerzon/vaultwarden](https://github.com/guerz
 | `https://<your-domain>` | Vaultwarden vault |
 | `https://<your-domain>/admin` | Admin panel |
 
-The `manifests/` directory contains the Istio Gateway, VirtualService and cert-manager Certificate. Update the domain in these files to match your own FQDN before deploying.
+The chart in `resources/` renders the Istio Gateway, VirtualService, cert-manager Certificate and the ExternalSecret. The public hostname is built from `subdomain` (in `resources/values.yaml`) and `global.domain` (in `gitops/global-values.yaml`), so no FQDN is hard-coded here.
 
 ## Vault Secret
 
-All sensitive configuration is stored in HashiCorp Vault at path `secret/vaultwarden` and synced to the Kubernetes secret `vaultwarden-credentials` via External Secrets Operator.
+All configuration is stored in HashiCorp Vault at path `secret/vaultwarden` and synced to the Kubernetes secret `vaultwarden-credentials`, which the chart loads as environment variables via `image.extraVarsSecret`. Keys are named exactly as their Vaultwarden environment variable, so the domain stays out of the repo.
 
 ### Required keys
 
 | Key | Description | Example |
 |-----|-------------|---------|
 | `ADMIN_TOKEN` | Argon2 PHC hash for the admin panel. Generate with `vaultwarden hash --preset owasp` | `$argon2id$v=19$...` |
+| `DOMAIN` | Public URL — must match `<subdomain>.<global.domain>` | `https://<subdomain>.<your-domain>` |
+| `INVITATION_ORG_NAME` | Name shown on organization invitation emails | `Passkey` |
 
 ### SMTP
 
@@ -58,6 +60,8 @@ All sensitive configuration is stored in HashiCorp Vault at path `secret/vaultwa
 ```bash
 vault kv put secret/vaultwarden \
   ADMIN_TOKEN='$argon2id$...' \
+  DOMAIN='https://<subdomain>.<your-domain>' \
+  INVITATION_ORG_NAME='Passkey' \
   SMTP_HOST='smtp.example.com' \
   SMTP_PORT='587' \
   SMTP_SECURITY='starttls' \

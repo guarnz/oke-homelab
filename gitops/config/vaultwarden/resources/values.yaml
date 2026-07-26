@@ -1,0 +1,5 @@
+subdomain: pass
+namespace: apps
+global:
+  domain: ""
+  issuer: ""
