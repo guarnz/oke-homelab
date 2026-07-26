@@ -10,7 +10,7 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oci-free-k8s
       targetRevision: HEAD
       ref: values
     - repoURL: https://community-charts.github.io/helm-charts
@@ -20,9 +20,13 @@ spec:
         releaseName: actualbudget
         valueFiles:
           - $values/gitops/config/actualbudget/values.yaml
-    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oci-free-k8s
       targetRevision: HEAD
-      path: gitops/config/actualbudget/manifests
+      path: gitops/config/actualbudget/resources
+      helm:
+        releaseName: actualbudget-resources
+        valueFiles:
+          - $values/gitops/global-values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: apps

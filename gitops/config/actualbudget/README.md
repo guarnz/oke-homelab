@@ -8,7 +8,7 @@ Local-first personal finance app deployed via the [community-charts actualbudget
 |-----|-------------|
 | `https://<your-domain>` | Actual Budget UI |
 
-The `manifests/` directory contains the Istio Gateway, VirtualService and cert-manager Certificate. Update the domain in these files to match your own FQDN before deploying.
+The chart in `resources/` renders the Istio Gateway, VirtualService and cert-manager Certificate. The public hostname is built from `subdomain` (in `resources/values.yaml`) and `global.domain` (in `gitops/global-values.yaml`), so no FQDN is hard-coded here.
 
 ## Storage
 

@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: actualbudget-tls
+  namespace: istio-system
+spec:
+  secretName: actualbudget-tls
+  issuerRef:
+    name: {{ include "actualbudget-resources.issuer" . }}
+    kind: ClusterIssuer
+  dnsNames:
+    - {{ include "actualbudget-resources.host" . }}
