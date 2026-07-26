@@ -10,7 +10,7 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oci-free-k8s
       targetRevision: HEAD
       ref: values
     - repoURL: https://prometheus-community.github.io/helm-charts
@@ -20,9 +20,13 @@ spec:
         releaseName: prometheus
         valueFiles:
           - $values/gitops/config/prometheus/values.yaml
-    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oci-free-k8s
       targetRevision: HEAD
-      path: gitops/config/prometheus/manifests
+      path: gitops/config/prometheus/resources
+      helm:
+        releaseName: prometheus-resources
+        valueFiles:
+          - $values/gitops/global-values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring

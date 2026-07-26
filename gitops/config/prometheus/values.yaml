@@ -12,15 +12,10 @@ alertmanager:
   enabled: false
 grafana:
   enabled: true
-  admin:
-    existingSecret: prometheus-credentials
-    userKey: GRAFANA_ADMIN_USER
-    passwordKey: GRAFANA_ADMIN_PASSWORD
+  envFromSecret: prometheus-credentials
   defaultDashboardsEnabled: true
   defaultDashboardsTimezone: America/Sao_Paulo
   grafana.ini:
-    server:
-      root_url: https://monitoring.nieri0x73.com
     security:
       cookie_secure: true
     users:

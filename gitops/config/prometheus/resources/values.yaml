@@ -1,0 +1,5 @@
+subdomain: monitoring
+namespace: monitoring
+global:
+  domain: ""
+  issuer: ""

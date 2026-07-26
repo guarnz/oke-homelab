@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: monitoring-tls
+  namespace: istio-system
+spec:
+  secretName: monitoring-tls
+  issuerRef:
+    name: {{ include "prometheus-resources.issuer" . }}
+    kind: ClusterIssuer
+  dnsNames:
+    - {{ include "prometheus-resources.host" . }}

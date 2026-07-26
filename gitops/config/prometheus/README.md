@@ -8,7 +8,7 @@ Self-hosted metrics stack deployed via the [prometheus-community/kube-prometheus
 |-----|-------------|
 | `https://<your-domain>` | Grafana UI |
 
-The `manifests/` directory contains the Istio Gateway, VirtualService and cert-manager Certificate. Update the domain in these files to match your own FQDN before deploying.
+The chart in `resources/` renders the Istio Gateway, VirtualService, cert-manager Certificate and the ExternalSecret. The public hostname is built from `subdomain` (in `resources/values.yaml`) and `global.domain` (in `gitops/global-values.yaml`), so no FQDN is hard-coded here.
 
 ## What it deploys
 
@@ -34,21 +34,23 @@ The chart bundles a full observability stack; components that are not used are t
 
 ## Vault Secret
 
-The Grafana admin credentials are stored in HashiCorp Vault at path `secret/grafana` and synced to the Kubernetes secret `prometheus-credentials` via External Secrets Operator. Grafana reads the username/password directly from that Secret via the `admin.existingSecret` field of the chart.
+Grafana configuration and admin credentials are stored in HashiCorp Vault at path `secret/grafana` and synced to the Kubernetes secret `prometheus-credentials` via External Secrets Operator. Grafana loads every key as an environment variable via `envFromSecret`, so the keys are named exactly as their Grafana environment variable — keeping the domain and credentials out of the repo.
 
 ### Required keys
 
 | Key | Description | Example |
 |-----|-------------|---------|
-| `GRAFANA_ADMIN_USER` | Grafana admin username | `admin` |
-| `GRAFANA_ADMIN_PASSWORD` | Grafana admin password | `long-random-string` |
+| `GF_SECURITY_ADMIN_USER` | Grafana admin username | `admin` |
+| `GF_SECURITY_ADMIN_PASSWORD` | Grafana admin password | `long-random-string` |
+| `GF_SERVER_ROOT_URL` | Public URL — must match `<subdomain>.<global.domain>` | `https://<subdomain>.<your-domain>` |
 
 ### Populating Vault
 
 ```bash
 vault kv patch secret/grafana \
-  GRAFANA_ADMIN_USER='admin' \
-  GRAFANA_ADMIN_PASSWORD="$(openssl rand -base64 32)"
+  GF_SECURITY_ADMIN_USER='admin' \
+  GF_SECURITY_ADMIN_PASSWORD="$(openssl rand -base64 32)" \
+  GF_SERVER_ROOT_URL='https://<subdomain>.<your-domain>'
 ```
 
 ## Storage
