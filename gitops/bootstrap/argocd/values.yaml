@@ -1,5 +1,5 @@
 global:
-  domain: gitops.nieri0x73.com
+  domain: gitops.guarnz.com
 configs:
   params:
     server.insecure: true

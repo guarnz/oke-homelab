@@ -1,0 +1,5 @@
+subdomain: gitops
+namespace: argocd
+global:
+  domain: ""
+  issuer: ""

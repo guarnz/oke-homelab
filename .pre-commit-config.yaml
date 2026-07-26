@@ -4,7 +4,7 @@ repos:
     rev: v6.0.0
     hooks:
       - id: check-yaml
-        exclude: ^gitops/config/.*/resources/templates/
+        exclude: ^gitops/.*/resources/templates/
       - id: check-merge-conflict
       - id: check-case-conflict
       - id: check-added-large-files
@@ -14,7 +14,7 @@ repos:
     rev: v0.21.0
     hooks:
       - id: yamlfmt
-        exclude: ^gitops/config/.*/resources/templates/
+        exclude: ^gitops/.*/resources/templates/
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.108.1
     hooks:

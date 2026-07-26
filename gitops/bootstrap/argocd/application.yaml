@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oci-free-k8s
       targetRevision: HEAD
       ref: values
     - repoURL: https://argoproj.github.io/argo-helm
@@ -18,9 +18,13 @@ spec:
         releaseName: argocd
         valueFiles:
           - $values/gitops/bootstrap/argocd/values.yaml
-    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oci-free-k8s
       targetRevision: HEAD
-      path: gitops/bootstrap/argocd/manifests
+      path: gitops/bootstrap/argocd/resources
+      helm:
+        releaseName: argocd-resources
+        valueFiles:
+          - $values/gitops/global-values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
