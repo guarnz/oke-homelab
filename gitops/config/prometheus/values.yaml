@@ -13,6 +13,10 @@ alertmanager:
 grafana:
   enabled: true
   envFromSecret: prometheus-credentials
+  admin:
+    existingSecret: prometheus-credentials
+    userKey: GF_SECURITY_ADMIN_USER
+    passwordKey: GF_SECURITY_ADMIN_PASSWORD
   defaultDashboardsEnabled: true
   defaultDashboardsTimezone: America/Sao_Paulo
   grafana.ini:
