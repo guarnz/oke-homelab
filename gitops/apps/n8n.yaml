@@ -10,7 +10,7 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oci-free-k8s
       targetRevision: HEAD
       ref: values
     - repoURL: https://community-charts.github.io/helm-charts
@@ -20,9 +20,13 @@ spec:
         releaseName: n8n
         valueFiles:
           - $values/gitops/config/n8n/values.yaml
-    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oci-free-k8s
       targetRevision: HEAD
-      path: gitops/config/n8n/manifests
+      path: gitops/config/n8n/resources
+      helm:
+        releaseName: n8n-resources
+        valueFiles:
+          - $values/gitops/global-values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: apps

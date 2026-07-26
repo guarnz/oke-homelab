@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: n8n-tls
+  namespace: istio-system
+spec:
+  secretName: n8n-tls
+  issuerRef:
+    name: {{ include "n8n-resources.issuer" . }}
+    kind: ClusterIssuer
+  dnsNames:
+    - {{ include "n8n-resources.host" . }}

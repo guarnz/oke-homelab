@@ -1,0 +1,29 @@
+{{- $host := include "n8n-resources.host" . -}}
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: n8n
+  namespace: {{ .Values.namespace }}
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: {{ $host }}
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: n8n-tls
+      hosts:
+        - {{ $host }}
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      tls:
+        httpsRedirect: true
+      hosts:
+        - {{ $host }}

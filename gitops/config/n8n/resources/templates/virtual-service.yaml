@@ -1,0 +1,16 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: n8n
+  namespace: {{ .Values.namespace }}
+spec:
+  hosts:
+    - {{ include "n8n-resources.host" . }}
+  gateways:
+    - n8n
+  http:
+    - route:
+        - destination:
+            host: n8n
+            port:
+              number: 5678

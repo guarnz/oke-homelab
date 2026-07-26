@@ -13,7 +13,6 @@ service:
 ingress:
   enabled: false
 main:
-  editorBaseUrl: "https://automation.nieri0x73.com"
   extraEnvVars:
     N8N_TRUST_PROXY: "true"
     N8N_PROXY_HOPS: "1"
@@ -45,5 +44,3 @@ main:
     enabled: true
     storageClass: longhorn
     size: 5Gi
-webhook:
-  url: "https://automation.nieri0x73.com"

@@ -8,17 +8,19 @@ Workflow automation platform deployed via the [n8n](https://charts.n8n.io) Helm 
 |-----|-------------|
 | `https://<your-domain>` | n8n UI |
 
-The `manifests/` directory contains the Istio Gateway, VirtualService and cert-manager Certificate. Update the domain in these files to match your own FQDN before deploying.
+The chart in `resources/` renders the Istio Gateway, VirtualService, cert-manager Certificate and the ExternalSecret. The public hostname is built from `subdomain` (in `resources/values.yaml`) and `global.domain` (in `gitops/global-values.yaml`), so no FQDN is hard-coded here.
 
 ## Vault Secret
 
-All sensitive configuration is stored in HashiCorp Vault at path `secret/n8n` and synced to the Kubernetes secret `n8n-credentials` via External Secrets Operator.
+All configuration is stored in HashiCorp Vault at path `secret/n8n` and synced to the Kubernetes secret `n8n-credentials`, which the chart loads as environment variables via `envFrom`. Keys are named exactly as their n8n environment variable, so the public URLs stay out of the repo.
 
 ### Required keys
 
 | Key | Description | Example |
 |-----|-------------|---------|
 | `N8N_ENCRYPTION_KEY` | Key used to encrypt credentials stored in the database — do not change after first install | `long-random-string` |
+| `N8N_EDITOR_BASE_URL` | Public editor URL — must match `<subdomain>.<global.domain>` | `https://<subdomain>.<your-domain>` |
+| `WEBHOOK_URL` | Public webhook URL — usually the same as the editor URL | `https://<subdomain>.<your-domain>` |
 
 ### SMTP (optional)
 
@@ -34,7 +36,9 @@ All sensitive configuration is stored in HashiCorp Vault at path `secret/n8n` an
 
 ```bash
 vault kv put secret/n8n \
-  N8N_ENCRYPTION_KEY='long-random-string'
+  N8N_ENCRYPTION_KEY='long-random-string' \
+  N8N_EDITOR_BASE_URL='https://<subdomain>.<your-domain>' \
+  WEBHOOK_URL='https://<subdomain>.<your-domain>'
 ```
 
 ## Non-sensitive environment variables

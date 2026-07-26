@@ -1,0 +1,5 @@
+subdomain: automation
+namespace: apps
+global:
+  domain: ""
+  issuer: ""
