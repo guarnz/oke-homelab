@@ -2,8 +2,34 @@
 set -euo pipefail
 
 ARGOCD_NS="argocd"
-REPO_URL="https://github.com/nieri0x73/oci-free-k8s"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Repository ArgoCD tracks. Defaults to this checkout's origin remote so a fork
+# points at itself; override with REPO_URL=... when running from a tarball.
+REPO_URL="${REPO_URL:-$(git -C "$SCRIPT_DIR" remote get-url origin 2>/dev/null)}"
+if [[ -z "$REPO_URL" ]]; then
+  echo "REPO_URL is not set and could not be derived from git. Export REPO_URL=https://github.com/<you>/<repo> and re-run." >&2
+  exit 1
+fi
+echo "==> Using repository: $REPO_URL"
+
+# ── point every Application source at this fork ───────────────────────────────
+# ArgoCD reads from git, so the repoURL baked into the Application/ApplicationSet
+# manifests must match this fork. Only rewrite `repoURL:` lines that point at a
+# checkout of THIS repo (matched by its name), never upstream chart or doc links.
+# Rewrite any that differ and remind the user to commit — otherwise the next sync
+# reverts them.
+GITOPS_DIR="$SCRIPT_DIR/../gitops"
+TARGET_URL="${REPO_URL%.git}"
+REPO_NAME="$(basename "$TARGET_URL")"
+REPO_RE="repoURL: https://github\.com/[^/]+/${REPO_NAME}([[:space:]]|/|$)"
+if grep -rlE "$REPO_RE" "$GITOPS_DIR" 2>/dev/null | grep -q .; then
+  echo "==> Repointing Application sources to: $TARGET_URL"
+  grep -rlE "$REPO_RE" "$GITOPS_DIR" \
+    | xargs sed -ri "s#(repoURL: )https://github\.com/[^/]+/${REPO_NAME}#\1${TARGET_URL}#g"
+  echo "    NOTE: Application manifests were rewritten. Commit and push them before"
+  echo "          ArgoCD syncs, or the next reconcile will revert them."
+fi
 
 # ── repository credentials (private repos only) ───────────────────────────────
 read -rsp "GitHub token (leave empty if repo is public): " GH_TOKEN; echo
