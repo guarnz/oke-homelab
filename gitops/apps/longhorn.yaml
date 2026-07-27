@@ -10,7 +10,7 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oci-free-k8s
       targetRevision: HEAD
       ref: values
     - repoURL: https://charts.longhorn.io
@@ -20,6 +20,11 @@ spec:
         releaseName: longhorn
         valueFiles:
           - $values/gitops/config/longhorn/values.yaml
+    - repoURL: https://github.com/guarnz/oci-free-k8s
+      targetRevision: HEAD
+      path: gitops/config/longhorn/resources
+      helm:
+        releaseName: longhorn-resources
   destination:
     server: https://kubernetes.default.svc
     namespace: longhorn-system

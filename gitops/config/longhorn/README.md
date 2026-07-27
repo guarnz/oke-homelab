@@ -59,3 +59,11 @@ vault kv put secret/longhorn \
 ```
 
 Then configure recurring backup jobs via the Longhorn UI under **Recurring Jobs**.
+
+## Remote Access over Tailscale
+
+The `resources/` chart defines an extra `longhorn-tailscale` service that targets the Longhorn UI and is exposed on the tailnet by the [Tailscale operator](../tailscale/README.md). Its hostname and tag come from `resources/values.yaml` (`tailscale.hostname`, `tailscale.tag`), defaulting to `storage` and `tag:shared`. The UI is then reachable from any tailnet device allowed to access that tag at:
+
+```
+http://storage.<tailnet>.ts.net
+```
