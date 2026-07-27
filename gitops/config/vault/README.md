@@ -116,7 +116,7 @@ Open `http://localhost:8200` in your browser.
 
 ## Remote Access over Tailscale
 
-The `resources/` chart defines an extra `vault-tailscale` service that targets the Vault server pod and is exposed on the tailnet by the [Tailscale operator](../tailscale/README.md). Its hostname and tag come from `resources/values.yaml` (`tailscale.hostname`, `tailscale.tag`), defaulting to `vault` and `tag:shared`. The UI and API are then reachable from any tailnet device allowed to access that tag at:
+The `resources/` chart defines an extra `vault-tailscale` service that targets the Vault server pod and is exposed on the tailnet by the [Tailscale operator](../tailscale/README.md). Its hostname and tag come from `resources/values.yaml` (`tailscale.hostname`, `tailscale.tag`), defaulting to `vault` and `tag:k8s`. The UI and API are then reachable from any tailnet device allowed to access that tag at:
 
 ```
 http://vault.<tailnet>.ts.net:8200

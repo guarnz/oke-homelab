@@ -1,4 +1,4 @@
 namespace: security
 tailscale:
   hostname: vault
-  tag: tag:shared
+  tag: tag:k8s

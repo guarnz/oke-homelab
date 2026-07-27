@@ -1,4 +1,4 @@
 namespace: longhorn-system
 tailscale:
   hostname: storage
-  tag: tag:shared
+  tag: tag:k8s
