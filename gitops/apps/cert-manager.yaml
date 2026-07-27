@@ -10,7 +10,7 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oci-free-k8s
       targetRevision: HEAD
       ref: values
     - repoURL: https://charts.jetstack.io
@@ -20,9 +20,13 @@ spec:
         releaseName: cert-manager
         valueFiles:
           - $values/gitops/config/cert-manager/values.yaml
-    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oci-free-k8s
       targetRevision: HEAD
-      path: gitops/config/cert-manager/manifests
+      path: gitops/config/cert-manager/resources
+      helm:
+        releaseName: cert-manager-resources
+        valueFiles:
+          - $values/gitops/global-values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager

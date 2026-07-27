@@ -1,0 +1,4 @@
+namespace: cert-manager
+challenge: dns
+global:
+  email: ""
