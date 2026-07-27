@@ -132,29 +132,41 @@ jobs:
             git worktree add -q --detach "$worktree" "$base" 2>/dev/null || worktree=""
           fi
 
-          render_side() { # $1=root dir  $2=app name  → prints rendered yaml or nothing
+          # Renders every chart source of an app (an app may have several, each
+          # with its own valueFiles) and concatenates the output. $1=root dir,
+          # $2=app name. Returns non-zero if any source fails to render.
+          render_side() {
             local root="$1"
             local name="$2"
             local app="$root/gitops/apps/$name.yaml"
             [ -f "$app" ] || return 0
-            local repo chart version values
-            repo="$(yq '.spec.sources[] | select(.chart != null) | .repoURL' "$app")"
-            chart="$(yq '.spec.sources[] | select(.chart != null) | .chart' "$app")"
-            version="$(yq '.spec.sources[] | select(.chart != null) | .targetRevision' "$app")"
-            [ -n "$chart" ] && [ "$chart" != "null" ] || return 0
-            values="$root/gitops/config/$name/values.yaml"
-            local args=(template "$name" "$chart" --repo "$repo" --version "$version" --skip-tests)
-            [ -f "$values" ] && args+=(-f "$values")
-            helm "${args[@]}" 2>/dev/null
+            local count i repo chart version release rc=0
+            count="$(yq '[.spec.sources[] | select(.chart != null)] | length' "$app")"
+            for i in $(seq 0 $((count - 1))); do
+              repo="$(yq "[.spec.sources[] | select(.chart != null)] | .[${i}] | .repoURL" "$app")"
+              chart="$(yq "[.spec.sources[] | select(.chart != null)] | .[${i}] | .chart" "$app")"
+              version="$(yq "[.spec.sources[] | select(.chart != null)] | .[${i}] | .targetRevision" "$app")"
+              release="$(yq "[.spec.sources[] | select(.chart != null)] | .[${i}] | .helm.releaseName // .chart" "$app")"
+              local args=(template "$release" "$chart" --repo "$repo" --version "$version" --skip-tests)
+              local vf
+              while IFS= read -r vf; do
+                [ -n "$vf" ] || continue
+                vf="${vf#\$values/}"
+                [ -f "$root/$vf" ] && args+=(-f "$root/$vf")
+              done < <(yq "[.spec.sources[] | select(.chart != null)] | .[${i}] | .helm.valueFiles[]?" "$app")
+              helm "${args[@]}" 2>/dev/null || rc=1
+              echo "---"
+            done
+            return $rc
           }
 
           : > diff.md
           fail=0
           for app in gitops/apps/*.yaml; do
             name="$(basename "$app" .yaml)"
-            chart="$(yq '.spec.sources[] | select(.chart != null) | .chart' "$app")"
+            chart="$(yq '[.spec.sources[] | select(.chart != null) | .chart] | join(",")' "$app")"
             [ -n "$chart" ] && [ "$chart" != "null" ] || continue
-            newver="$(yq '.spec.sources[] | select(.chart != null) | .targetRevision' "$app")"
+            newver="$(yq '[.spec.sources[] | select(.chart != null) | .targetRevision] | join(",")' "$app")"
 
             echo "::group::validate $name ($chart $newver)"
             if ! render_side "." "$name" > "new_$name.yaml"; then
@@ -168,7 +180,7 @@ jobs:
             if [ -n "$worktree" ]; then
               render_side "$worktree" "$name" > "old_$name.yaml"
               if ! diff -q "old_$name.yaml" "new_$name.yaml" >/dev/null 2>&1; then
-                oldver="$(yq '.spec.sources[] | select(.chart != null) | .targetRevision' "$worktree/gitops/apps/$name.yaml" 2>/dev/null || echo '?')"
+                oldver="$(yq '[.spec.sources[] | select(.chart != null) | .targetRevision] | join(",")' "$worktree/gitops/apps/$name.yaml" 2>/dev/null || echo '?')"
                 {
                   echo "<details><summary><b>$name</b> — $chart <code>$oldver</code> → <code>$newver</code></summary>"
                   echo
