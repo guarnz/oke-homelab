@@ -1,0 +1,259 @@
+name: CI
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      job:
+        description: Which validation to run
+        type: choice
+        default: all
+        options:
+          - all
+          - pre-commit
+          - render-resources
+          - render-upstream
+          - terraform
+          - shellcheck
+permissions:
+  contents: read
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      resources: ${{ steps.filter.outputs.resources }}
+      upstream: ${{ steps.filter.outputs.upstream }}
+      terraform: ${{ steps.filter.outputs.terraform }}
+      scripts: ${{ steps.filter.outputs.scripts }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            resources:
+              - 'gitops/**/resources/**'
+              - 'gitops/global-values.yaml'
+            upstream:
+              - 'gitops/apps/**'
+              - 'gitops/config/**/values.yaml'
+            terraform:
+              - 'terraform/**'
+            scripts:
+              - '**/*.sh'
+  pre-commit:
+    needs: detect
+    if: github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'pre-commit'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Run pre-commit
+        id: precommit
+        run: |
+          pip install pre-commit
+          set -o pipefail
+          SKIP=terraform_fmt pre-commit run --all-files --color always --show-diff-on-failure 2>&1 | tee pre-commit.out
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## pre-commit"
+            echo "Result: ${{ steps.precommit.outcome }}"
+            echo '```'
+            tail -n 60 pre-commit.out 2>/dev/null || echo "no output"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+  render-resources:
+    needs: detect
+    if: |
+      (github.event_name == 'pull_request' && needs.detect.outputs.resources == 'true') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'render-resources'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - name: Install kubeconform
+        run: |
+          curl -sSLo kubeconform.tar.gz https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz
+          tar xf kubeconform.tar.gz kubeconform
+          sudo mv kubeconform /usr/local/bin/
+      - name: Render and validate resources charts
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          echo "## render-resources" >> "$GITHUB_STEP_SUMMARY"
+          fail=0
+          for chart in gitops/config/*/resources gitops/bootstrap/*/resources; do
+            [ -f "$chart/Chart.yaml" ] || continue
+            echo "::group::$chart"
+            if helm template "$chart" -f gitops/global-values.yaml \
+              | kubeconform -strict -ignore-missing-schemas -summary -; then
+              echo "- ✅ \`$chart\`" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "- ❌ \`$chart\`" >> "$GITHUB_STEP_SUMMARY"
+              fail=1
+            fi
+            echo "::endgroup::"
+          done
+          exit $fail
+  render-upstream:
+    needs: detect
+    if: |
+      (github.event_name == 'pull_request' && needs.detect.outputs.upstream == 'true') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'render-upstream'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: azure/setup-helm@v4
+      - name: Install kubeconform and yq
+        run: |
+          curl -sSLo kubeconform.tar.gz https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz
+          tar xf kubeconform.tar.gz kubeconform
+          sudo mv kubeconform /usr/local/bin/
+          sudo curl -sSLo /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+      - name: Render, diff (main vs PR) and validate
+        id: render
+        run: |
+          set -uo pipefail
+          base="${{ github.event.pull_request.base.sha }}"
+          [ -n "$base" ] || base="$(git rev-parse origin/main 2>/dev/null || echo '')"
+          worktree=""
+          if [ -n "$base" ]; then
+            worktree="../base"
+            git worktree add -q --detach "$worktree" "$base" 2>/dev/null || worktree=""
+          fi
+
+          render_side() { # $1=root dir  $2=app name  → prints rendered yaml or nothing
+            local root="$1"
+            local name="$2"
+            local app="$root/gitops/apps/$name.yaml"
+            [ -f "$app" ] || return 0
+            local repo chart version values
+            repo="$(yq '.spec.sources[] | select(.chart != null) | .repoURL' "$app")"
+            chart="$(yq '.spec.sources[] | select(.chart != null) | .chart' "$app")"
+            version="$(yq '.spec.sources[] | select(.chart != null) | .targetRevision' "$app")"
+            [ -n "$chart" ] && [ "$chart" != "null" ] || return 0
+            values="$root/gitops/config/$name/values.yaml"
+            local args=(template "$name" "$chart" --repo "$repo" --version "$version" --skip-tests)
+            [ -f "$values" ] && args+=(-f "$values")
+            helm "${args[@]}" 2>/dev/null
+          }
+
+          : > diff.md
+          fail=0
+          for app in gitops/apps/*.yaml; do
+            name="$(basename "$app" .yaml)"
+            chart="$(yq '.spec.sources[] | select(.chart != null) | .chart' "$app")"
+            [ -n "$chart" ] && [ "$chart" != "null" ] || continue
+            newver="$(yq '.spec.sources[] | select(.chart != null) | .targetRevision' "$app")"
+
+            render_side "." "$name" > "new_$name.yaml"
+            echo "::group::validate $name ($chart $newver)"
+            if kubeconform -strict -ignore-missing-schemas -summary - < "new_$name.yaml"; then :; else fail=1; fi
+            echo "::endgroup::"
+
+            if [ -n "$worktree" ]; then
+              render_side "$worktree" "$name" > "old_$name.yaml"
+              if ! diff -q "old_$name.yaml" "new_$name.yaml" >/dev/null 2>&1; then
+                oldver="$(yq '.spec.sources[] | select(.chart != null) | .targetRevision' "$worktree/gitops/apps/$name.yaml" 2>/dev/null || echo '?')"
+                {
+                  echo "<details><summary><b>$name</b> — $chart <code>$oldver</code> → <code>$newver</code></summary>"
+                  echo
+                  echo '```diff'
+                  diff -u "old_$name.yaml" "new_$name.yaml" | sed '1,2d' | head -n 300
+                  echo '```'
+                  echo "</details>"
+                  echo
+                } >> diff.md
+              fi
+            fi
+          done
+
+          [ -n "$worktree" ] && git worktree remove -f "$worktree" 2>/dev/null || true
+
+          {
+            echo "## render-upstream"
+            if [ -s diff.md ]; then cat diff.md; else echo "_No render changes._"; fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "fail=$fail" >> "$GITHUB_OUTPUT"
+      - name: Upsert PR comment with render diff
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body = fs.existsSync('diff.md') ? fs.readFileSync('diff.md', 'utf8') : '';
+            const marker = '<!-- render-diff -->';
+            body = body.trim()
+              ? `${marker}\n## Helm render diff (main → this PR)\n\n${body}`
+              : `${marker}\n## Helm render diff (main → this PR)\n\n_No render changes from this PR._`;
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.rest.issues.listComments({ owner, repo, issue_number });
+            const existing = comments.data.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+      - name: Fail if validation failed
+        if: steps.render.outputs.fail == '1'
+        run: exit 1
+  terraform:
+    needs: detect
+    if: |
+      (github.event_name == 'pull_request' && needs.detect.outputs.terraform == 'true') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'terraform'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: Format check
+        id: fmt
+        run: terraform fmt -check -recursive terraform/
+        continue-on-error: true
+      - name: Init (no backend)
+        run: terraform -chdir=terraform init -backend=false
+      - name: Validate
+        id: validate
+        run: terraform -chdir=terraform validate
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## terraform"
+            echo "- fmt: ${{ steps.fmt.outcome }}"
+            echo "- validate: ${{ steps.validate.outcome }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Fail on fmt
+        if: steps.fmt.outcome == 'failure'
+        run: exit 1
+  shellcheck:
+    needs: detect
+    if: |
+      (github.event_name == 'pull_request' && needs.detect.outputs.scripts == 'true') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'shellcheck'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run shellcheck
+        run: |
+          set -uo pipefail
+          shopt -s nullglob
+          files=(scripts/*.sh terraform/files/*.sh)
+          echo "## shellcheck" >> "$GITHUB_STEP_SUMMARY"
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "_No shell scripts._" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          printf '%s\n' "${files[@]/#/- }" >> "$GITHUB_STEP_SUMMARY"
+          shellcheck "${files[@]}"
