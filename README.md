@@ -13,7 +13,7 @@ Production-grade Kubernetes cluster running **entirely free** on OCI Always Free
 
 This repository contains the complete infrastructure and application stack for a personal Kubernetes cluster, following GitOps principles with Argo CD. Everything is managed as code — from the underlying OCI infrastructure (Terraform) to the Kubernetes applications (Helm), including secrets management (Vault), SSO (VoidAuth) and distributed storage (Longhorn).
 
-A production-grade architecture running at **zero cost**, made possible by the OCI Always Free tier.
+Fork it, set your domain once in `gitops/global-values.yaml`, populate your own Vault, and run the whole stack on your own OCI tenancy.
 
 ## Stack
 
