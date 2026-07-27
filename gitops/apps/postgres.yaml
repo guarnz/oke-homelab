@@ -10,7 +10,7 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oci-free-k8s
       targetRevision: HEAD
       ref: values
     - repoURL: https://cloudnative-pg.github.io/charts
@@ -20,9 +20,11 @@ spec:
         releaseName: postgres
         valueFiles:
           - $values/gitops/config/postgres/values.yaml
-    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oci-free-k8s
       targetRevision: HEAD
-      path: gitops/config/postgres/manifests
+      path: gitops/config/postgres/resources
+      helm:
+        releaseName: postgres-resources
   destination:
     server: https://kubernetes.default.svc
     namespace: databases

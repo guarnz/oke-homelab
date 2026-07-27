@@ -1,0 +1,4 @@
+namespace: databases
+tailscale:
+  hostname: postgres
+  tag: tag:shared

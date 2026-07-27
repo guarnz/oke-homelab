@@ -47,7 +47,7 @@ Use the read-write service for writes and the read-only service for reads:
 
 ## Remote Access over Tailscale
 
-`manifests/tailscale-service.yaml` defines an extra `postgres-tailscale` service that targets the primary and is exposed on the tailnet by the [Tailscale operator](../tailscale/README.md), tagged `tag:shared`. It is reachable from any tailnet device allowed to access `tag:shared` at:
+The `resources/` chart defines an extra `postgres-tailscale` service that targets the primary and is exposed on the tailnet by the [Tailscale operator](../tailscale/README.md). Its hostname and tag come from `resources/values.yaml` (`tailscale.hostname`, `tailscale.tag`), defaulting to `postgres` and `tag:shared`. It is reachable from any tailnet device allowed to access that tag at:
 
 ```
 postgres.<tailnet>.ts.net:5432
