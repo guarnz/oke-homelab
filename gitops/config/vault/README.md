@@ -119,5 +119,7 @@ Open `http://localhost:8200` in your browser.
 The `resources/` chart defines an extra `vault-tailscale` service that targets the Vault server pod and is exposed on the tailnet by the [Tailscale operator](../tailscale/README.md). Its hostname and tag come from `resources/values.yaml` (`tailscale.hostname`, `tailscale.tag`), defaulting to `vault` and `tag:k8s`. The UI and API are then reachable from any tailnet device allowed to access that tag at:
 
 ```
-http://vault.<tailnet>.ts.net:8200
+http://vault.<tailnet>.ts.net
 ```
+
+The service publishes port 80 on the tailnet and forwards to Vault's `8200`, so no port is needed in the URL.
