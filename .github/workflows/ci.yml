@@ -90,9 +90,9 @@ jobs:
             echo "::group::$chart"
             if helm template "$chart" -f gitops/global-values.yaml \
               | kubeconform -strict -ignore-missing-schemas -summary -; then
-              echo "- ✅ \`$chart\`" >> "$GITHUB_STEP_SUMMARY"
+              echo "- PASS \`$chart\`" >> "$GITHUB_STEP_SUMMARY"
             else
-              echo "- ❌ \`$chart\`" >> "$GITHUB_STEP_SUMMARY"
+              echo "- FAIL \`$chart\`" >> "$GITHUB_STEP_SUMMARY"
               fail=1
             fi
             echo "::endgroup::"
@@ -122,6 +122,7 @@ jobs:
       - name: Render, diff (main vs PR) and validate
         id: render
         run: |
+          set +e
           set -uo pipefail
           base="${{ github.event.pull_request.base.sha }}"
           [ -n "$base" ] || base="$(git rev-parse origin/main 2>/dev/null || echo '')"
@@ -155,9 +156,13 @@ jobs:
             [ -n "$chart" ] && [ "$chart" != "null" ] || continue
             newver="$(yq '.spec.sources[] | select(.chart != null) | .targetRevision' "$app")"
 
-            render_side "." "$name" > "new_$name.yaml"
             echo "::group::validate $name ($chart $newver)"
-            if kubeconform -strict -ignore-missing-schemas -summary - < "new_$name.yaml"; then :; else fail=1; fi
+            if ! render_side "." "$name" > "new_$name.yaml"; then
+              echo "helm template failed for $name"
+              fail=1
+            elif ! kubeconform -strict -ignore-missing-schemas -summary - < "new_$name.yaml"; then
+              fail=1
+            fi
             echo "::endgroup::"
 
             if [ -n "$worktree" ]; then
