@@ -10,7 +10,7 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oci-free-k8s
       targetRevision: HEAD
       ref: values
     - repoURL: https://helm.releases.hashicorp.com
@@ -20,6 +20,11 @@ spec:
         releaseName: vault
         valueFiles:
           - $values/gitops/config/vault/values.yaml
+    - repoURL: https://github.com/guarnz/oci-free-k8s
+      targetRevision: HEAD
+      path: gitops/config/vault/resources
+      helm:
+        releaseName: vault-resources
   destination:
     server: https://kubernetes.default.svc
     namespace: security
