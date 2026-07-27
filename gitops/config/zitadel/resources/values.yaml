@@ -1,6 +1,0 @@
-subdomain: iam
-namespace: security
-credentialName: zitadel-credentials
-global:
-  domain: ""
-  issuer: ""

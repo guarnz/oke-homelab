@@ -35,14 +35,14 @@ All configuration is stored in HashiCorp Vault at path `secret/vaultwarden` and 
 | `SMTP_USERNAME` | SMTP authentication username | `vault@example.com` |
 | `SMTP_PASSWORD` | SMTP password or app password | `your-smtp-password` |
 
-### Zitadel SSO (OpenID Connect)
+### SSO (OpenID Connect)
 
 | Key | Description | Example |
 |-----|-------------|---------|
 | `SSO_ENABLED` | Enable SSO login | `true` |
-| `SSO_CLIENT_ID` | Client ID issued by Zitadel | `123456789012345678@homelab` |
-| `SSO_CLIENT_SECRET` | Client secret from Zitadel | `your-client-secret` |
-| `SSO_AUTHORITY` | Zitadel issuer URL (the instance domain) | `https://<zitadel-domain>` |
+| `SSO_CLIENT_ID` | Client ID issued by your OIDC provider | `vaultwarden` |
+| `SSO_CLIENT_SECRET` | Client secret from your OIDC provider | `your-client-secret` |
+| `SSO_AUTHORITY` | OIDC issuer URL (the provider's instance domain) | `https://<sso-domain>` |
 | `SSO_SCOPES` | Additional OIDC scopes (optional) | `email profile` |
 | `SSO_PKCE` | Use PKCE during auth flow (recommended) | `true` |
 
@@ -72,7 +72,7 @@ vault kv put secret/vaultwarden \
   SSO_ENABLED='true' \
   SSO_CLIENT_ID='vaultwarden' \
   SSO_CLIENT_SECRET='your-client-secret' \
-  SSO_AUTHORITY='https://<zitadel-domain>'
+  SSO_AUTHORITY='https://<sso-domain>'
 ```
 
 ## Generating the Admin Token
