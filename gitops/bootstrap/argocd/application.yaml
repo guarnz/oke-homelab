@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: https://github.com/guarnz/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oke-homelab
       targetRevision: HEAD
       ref: values
     - repoURL: https://argoproj.github.io/argo-helm
@@ -18,7 +18,7 @@ spec:
         releaseName: argocd
         valueFiles:
           - $values/gitops/bootstrap/argocd/values.yaml
-    - repoURL: https://github.com/guarnz/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oke-homelab
       targetRevision: HEAD
       path: gitops/bootstrap/argocd/resources
       helm:

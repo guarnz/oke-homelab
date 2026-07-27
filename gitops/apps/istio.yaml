@@ -10,7 +10,7 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: https://github.com/nieri0x73/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oke-homelab
       targetRevision: HEAD
       ref: values
     - repoURL: https://istio-release.storage.googleapis.com/charts

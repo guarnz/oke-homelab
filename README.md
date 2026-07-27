@@ -1,4 +1,4 @@
-# OCI Free Kubernetes
+# OKE Homelab
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.35.2-326CE5?logo=kubernetes&logoColor=white)](https://kubernetes.io/)
@@ -11,9 +11,9 @@ Production-grade Kubernetes cluster running **entirely free** on OCI Always Free
 
 ## Overview
 
-This repository contains the complete infrastructure and application stack for a personal Kubernetes cluster, following GitOps principles with Argo CD. Everything is managed as code — from the underlying OCI infrastructure (Terraform) to the Kubernetes applications (Helm), including secrets management (Vault), SSO (Zitadel) and distributed storage (Longhorn).
+This repository contains the complete infrastructure and application stack for a personal Kubernetes cluster, following GitOps principles with Argo CD. Everything is managed as code — from the underlying OCI infrastructure (Terraform) to the Kubernetes applications (Helm), including secrets management (Vault), SSO (VoidAuth) and distributed storage (Longhorn).
 
-Enterprise-grade architecture running at **zero cost**, made possible by the OCI Always Free tier.
+A production-grade architecture running at **zero cost**, made possible by the OCI Always Free tier.
 
 ## Stack
 
@@ -31,7 +31,7 @@ Enterprise-grade architecture running at **zero cost**, made possible by the OCI
 | [Longhorn](gitops/config/longhorn/README.md) | Distributed block storage |
 | [CloudNativePG](gitops/config/cloudnativepg/) | PostgreSQL operator |
 | [PostgreSQL](gitops/config/postgres/README.md) | PostgreSQL cluster |
-| [Zitadel](gitops/config/zitadel/README.md) | Identity and Access Management (SSO) |
+| [VoidAuth](gitops/config/voidauth/README.md) | Identity and Access Management (SSO) |
 | [Vaultwarden](gitops/config/vaultwarden/README.md) | Self-hosted password manager |
 | [N8N](gitops/config/n8n/README.md) | Workflow automation |
 | [Actual Budget](gitops/config/actualbudget/README.md) | Local-first personal finance app |
@@ -64,8 +64,8 @@ Enterprise-grade architecture running at **zero cost**, made possible by the OCI
 
 ```bash
 # Clone the repository
-git clone https://github.com/nieri0x73/oci-free-k8s.git
-cd oci-free-k8s
+git clone https://github.com/guarnz/oke-homelab.git
+cd oke-homelab
 
 # Configure OCI credentials
 oci setup config
@@ -125,13 +125,10 @@ Run the bootstrap script:
 bash scripts/argocd-bootstrap.sh
 ```
 
-Or manually:
+Or manually (make sure the `repoURL` in every Application under `gitops/` already
+points at your fork before applying):
 
 ```bash
-# Point the Application manifests at your fork (skip if already committed)
-grep -rlE 'repoURL: https://github.com/[^/]+/<your-repo>' gitops/ \
-  | xargs sed -ri 's#(repoURL: )https://github.com/[^/]+/<your-repo>#\1https://github.com/<your-user>/<your-repo>#g'
-
 helm repo add argo https://argoproj.github.io/argo-helm
 helm upgrade --install argocd argo/argo-cd -n argocd --create-namespace \
   -f gitops/bootstrap/argocd/values.yaml --wait
@@ -165,7 +162,6 @@ kubectl exec -n security vault-0 -- vault write auth/kubernetes/config \
   kubernetes_host="https://kubernetes.default.svc"
 
 # Populate secrets for each app
-kubectl exec -n security vault-0 -- vault kv put secret/zitadel masterkey='...'
 kubectl exec -n security vault-0 -- vault kv put secret/vaultwarden ADMIN_TOKEN='...'
 # See each app README for required secret keys
 ```
@@ -193,7 +189,7 @@ kubectl exec -n security vault-0 -- vault kv put secret/argocd-repo \
 
 ## Contributing
 
-Contributions are welcome! Feel free to open issues or pull requests to improve this project.
+Contributions are welcome. Open an issue using one of the [issue templates](.github/ISSUE_TEMPLATE) to report a bug or request a feature, and send pull requests following the [pull request template](.github/PULL_REQUEST_TEMPLATE.md) — fill in **What**/**Why**, tick the change type, and make sure `pre-commit run --all-files` passes with no secrets committed.
 
 ## License
 

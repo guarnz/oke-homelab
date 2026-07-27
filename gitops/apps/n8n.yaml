@@ -10,7 +10,7 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: https://github.com/guarnz/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oke-homelab
       targetRevision: HEAD
       ref: values
     - repoURL: https://community-charts.github.io/helm-charts
@@ -20,7 +20,7 @@ spec:
         releaseName: n8n
         valueFiles:
           - $values/gitops/config/n8n/values.yaml
-    - repoURL: https://github.com/guarnz/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oke-homelab
       targetRevision: HEAD
       path: gitops/config/n8n/resources
       helm:

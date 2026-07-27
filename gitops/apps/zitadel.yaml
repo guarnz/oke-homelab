@@ -10,7 +10,7 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: https://github.com/guarnz/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oke-homelab
       targetRevision: HEAD
       ref: values
     - repoURL: https://charts.zitadel.com
@@ -20,7 +20,7 @@ spec:
         releaseName: zitadel
         valueFiles:
           - $values/gitops/config/zitadel/values.yaml
-    - repoURL: https://github.com/guarnz/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oke-homelab
       targetRevision: HEAD
       path: gitops/config/zitadel/resources
       helm:

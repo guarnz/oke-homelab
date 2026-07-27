@@ -10,7 +10,7 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: https://github.com/guarnz/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oke-homelab
       targetRevision: HEAD
       ref: values
     - repoURL: https://charts.jetstack.io
@@ -20,7 +20,7 @@ spec:
         releaseName: cert-manager
         valueFiles:
           - $values/gitops/config/cert-manager/values.yaml
-    - repoURL: https://github.com/guarnz/oci-free-k8s
+    - repoURL: https://github.com/guarnz/oke-homelab
       targetRevision: HEAD
       path: gitops/config/cert-manager/resources
       helm:
