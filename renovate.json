@@ -23,6 +23,10 @@
   "prHourlyLimit": 3,
   "packageRules": [
     {
+      "matchDepNames": ["https://github.com/guarnz/oke-homelab"],
+      "enabled": false
+    },
+    {
       "matchManagers": ["pre-commit"],
       "groupName": "pre-commit hooks"
     },
