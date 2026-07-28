@@ -2,7 +2,11 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability, please **do not open a public issue**. Send an email to the repository owner via GitHub with a description of the issue and steps to reproduce. You can expect an acknowledgment within 48 hours.
+If you discover a security vulnerability, please **do not open a public issue**. Report it privately through GitHub Security Advisories:
+
+**https://github.com/guarnz/oke-homelab/security/advisories/new**
+
+Include a description of the issue and steps to reproduce. You can expect an acknowledgment within 48 hours and an initial assessment within 7 days. Once the issue is confirmed and a fix is available, the advisory will be published.
 
 ## Security Measures
 
@@ -35,6 +39,7 @@ If you discover a security vulnerability, please **do not open a public issue**.
 - **Gitleaks** — scans commits for secrets and credentials before push
 - **Pre-commit hooks** — additional checks for private keys and large files
 - **Terraform provider pinning** — all provider versions are pinned to prevent supply chain attacks
+- **GitHub Actions pinned by digest** — Renovate pins actions to a commit SHA (`pinDigests`) so a moved tag cannot alter a workflow
 - **Renovate Bot** — keeps dependencies up to date automatically
 
 ## Dependencies

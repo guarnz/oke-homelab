@@ -6,6 +6,7 @@
     ":dependencyDashboard",
     ":rebaseStalePrs"
   ],
+  "pinDigests": true,
   "terraform": {},
   "pre-commit": {
     "enabled": true
