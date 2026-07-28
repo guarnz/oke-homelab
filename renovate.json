@@ -28,7 +28,8 @@
     },
     {
       "matchManagers": ["pre-commit"],
-      "groupName": "pre-commit hooks"
+      "groupName": "pre-commit hooks",
+      "pinDigests": false
     },
     {
       "matchManagers": ["terraform"],
