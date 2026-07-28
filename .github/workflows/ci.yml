@@ -14,7 +14,7 @@ on:
           - charts
           - terraform
           - scripts
-          - actionlint
+          - workflows
 permissions:
   contents: read
 jobs:
@@ -330,11 +330,11 @@ jobs:
           fi
           printf '%s\n' "${files[@]/#/- }" >> "$GITHUB_STEP_SUMMARY"
           shellcheck "${files[@]}"
-  actionlint:
+  workflows:
     needs: detect
     if: |
       (github.event_name == 'pull_request' && needs.detect.outputs.workflows == 'true') ||
-      (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'actionlint'))
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'workflows'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
