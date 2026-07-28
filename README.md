@@ -1,12 +1,6 @@
 # OKE Homelab
 
-[![License: MIT](https://img.shields.io/github/license/guarnz/oke-homelab?color=blue)](LICENSE)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/guarnz/oke-homelab/badge)](https://securityscorecards.dev/viewer/?uri=github.com/guarnz/oke-homelab)
-[![Renovate](https://img.shields.io/badge/renovate-enabled-1a1f6c?logo=renovatebot&logoColor=white)](https://renovatebot.com)
-[![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.36.1-326CE5?logo=kubernetes&logoColor=white)](https://kubernetes.io/)
-[![ArgoCD](https://img.shields.io/badge/GitOps-ArgoCD-EF7B4D?logo=argo&logoColor=white)](https://argoproj.github.io/cd/)
-[![Terraform](https://img.shields.io/badge/IaC-Terraform-7B42BC?logo=terraform&logoColor=white)](https://www.terraform.io/)
-[![OCI](https://img.shields.io/badge/Cloud-Oracle_OCI-F80000?logo=oracle&logoColor=white)](https://www.oracle.com/cloud/)
+[![License: MIT](https://img.shields.io/github/license/guarnz/oke-homelab?color=blue)](LICENSE) [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/guarnz/oke-homelab/badge)](https://securityscorecards.dev/viewer/?uri=github.com/guarnz/oke-homelab) [![Renovate](https://img.shields.io/badge/renovate-enabled-1a1f6c?logo=renovatebot&logoColor=white)](https://renovatebot.com) [![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.36.1-326CE5?logo=kubernetes&logoColor=white)](https://kubernetes.io/) [![ArgoCD](https://img.shields.io/badge/GitOps-ArgoCD-EF7B4D?logo=argo&logoColor=white)](https://argoproj.github.io/cd/) [![Terraform](https://img.shields.io/badge/IaC-Terraform-7B42BC?logo=terraform&logoColor=white)](https://www.terraform.io/) [![OCI](https://img.shields.io/badge/Cloud-Oracle_OCI-F80000?logo=oracle&logoColor=white)](https://www.oracle.com/cloud/)
 
 Production-grade Kubernetes cluster running **entirely free** on OCI Always Free tier — GitOps with ArgoCD, Istio, Vault and Terraform.
 
