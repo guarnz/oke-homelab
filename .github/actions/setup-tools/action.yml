@@ -1,0 +1,23 @@
+name: Setup render tools
+description: Installs kubeconform, yq and dyff for rendering and validating manifests.
+runs:
+  using: composite
+  steps:
+    - name: Install kubeconform, yq and dyff
+      shell: bash
+      env:
+        # renovate: datasource=github-releases depName=yannh/kubeconform
+        KUBECONFORM_VERSION: v0.8.0
+        # renovate: datasource=github-releases depName=mikefarah/yq
+        YQ_VERSION: v4.53.3
+        # renovate: datasource=github-releases depName=homeport/dyff
+        DYFF_VERSION: v1.12.0
+      run: |
+        curl -sSLo kubeconform.tar.gz "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
+        tar xf kubeconform.tar.gz kubeconform
+        sudo mv kubeconform /usr/local/bin/
+        sudo curl -sSLo /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
+        sudo chmod +x /usr/local/bin/yq
+        curl -sSLo dyff.tar.gz "https://github.com/homeport/dyff/releases/download/${DYFF_VERSION}/dyff_${DYFF_VERSION#v}_linux_amd64.tar.gz"
+        tar xf dyff.tar.gz dyff
+        sudo mv dyff /usr/local/bin/

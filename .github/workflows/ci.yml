@@ -1,4 +1,4 @@
-name: CI
+name: Validate
 on:
   pull_request:
   workflow_dispatch:
@@ -9,11 +9,12 @@ on:
         default: all
         options:
           - all
-          - pre-commit
-          - render-resources
-          - render-upstream
+          - lint
+          - resources
+          - charts
           - terraform
-          - shellcheck
+          - scripts
+          - actionlint
 permissions:
   contents: read
 jobs:
@@ -24,6 +25,7 @@ jobs:
       upstream: ${{ steps.filter.outputs.upstream }}
       terraform: ${{ steps.filter.outputs.terraform }}
       scripts: ${{ steps.filter.outputs.scripts }}
+      workflows: ${{ steps.filter.outputs.workflows }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
@@ -40,69 +42,23 @@ jobs:
               - 'terraform/**'
             scripts:
               - '**/*.sh'
-  pre-commit:
+            workflows:
+              - '.github/workflows/**'
+              - '.github/actions/**'
+  lint:
     needs: detect
-    if: github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'pre-commit'
+    if: github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'lint'
     runs-on: ubuntu-latest
+    env:
+      SKIP: terraform_fmt
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.x'
-      - name: Run pre-commit
-        id: precommit
-        run: |
-          pip install pre-commit
-          set -o pipefail
-          SKIP=terraform_fmt pre-commit run --all-files --color always --show-diff-on-failure 2>&1 | tee pre-commit.out
-      - name: Summary
-        if: always()
-        run: |
-          {
-            echo "## pre-commit"
-            echo "Result: ${{ steps.precommit.outcome }}"
-            echo '```'
-            tail -n 60 pre-commit.out 2>/dev/null || echo "no output"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-  render-resources:
+      - uses: pre-commit/action@v3.0.1
+  resources:
     needs: detect
     if: |
       (github.event_name == 'pull_request' && needs.detect.outputs.resources == 'true') ||
-      (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'render-resources'))
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: azure/setup-helm@v5
-      - name: Install kubeconform
-        run: |
-          curl -sSLo kubeconform.tar.gz https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz
-          tar xf kubeconform.tar.gz kubeconform
-          sudo mv kubeconform /usr/local/bin/
-      - name: Render and validate resources charts
-        run: |
-          set -euo pipefail
-          shopt -s nullglob
-          echo "## render-resources" >> "$GITHUB_STEP_SUMMARY"
-          fail=0
-          for chart in gitops/config/*/resources gitops/bootstrap/*/resources; do
-            [ -f "$chart/Chart.yaml" ] || continue
-            echo "::group::$chart"
-            if helm template "$chart" -f gitops/global-values.yaml \
-              | kubeconform -strict -ignore-missing-schemas -summary -; then
-              echo "- PASS \`$chart\`" >> "$GITHUB_STEP_SUMMARY"
-            else
-              echo "- FAIL \`$chart\`" >> "$GITHUB_STEP_SUMMARY"
-              fail=1
-            fi
-            echo "::endgroup::"
-          done
-          exit $fail
-  render-upstream:
-    needs: detect
-    if: |
-      (github.event_name == 'pull_request' && needs.detect.outputs.upstream == 'true') ||
-      (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'render-upstream'))
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'resources'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -112,13 +68,102 @@ jobs:
         with:
           fetch-depth: 0
       - uses: azure/setup-helm@v5
-      - name: Install kubeconform and yq
+      - uses: ./.github/actions/setup-tools
+      - name: Render, diff (main vs PR) and validate
+        id: render
         run: |
-          curl -sSLo kubeconform.tar.gz https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz
-          tar xf kubeconform.tar.gz kubeconform
-          sudo mv kubeconform /usr/local/bin/
-          sudo curl -sSLo /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-          sudo chmod +x /usr/local/bin/yq
+          set +e
+          set -uo pipefail
+          base="${{ github.event.pull_request.base.sha }}"
+          [ -n "$base" ] || base="$(git rev-parse origin/main 2>/dev/null || echo '')"
+          worktree=""
+          if [ -n "$base" ]; then
+            worktree="../base"
+            git worktree add -q --detach "$worktree" "$base" 2>/dev/null || worktree=""
+          fi
+
+          : > diff.md
+          echo "## render-resources" >> "$GITHUB_STEP_SUMMARY"
+          fail=0
+          for chart in gitops/config/*/resources gitops/bootstrap/*/resources; do
+            [ -f "$chart/Chart.yaml" ] || continue
+            name="$(basename "$(dirname "$chart")")"
+            echo "::group::$chart"
+            if ! helm template "$chart" -f gitops/global-values.yaml > "new_res_$name.yaml" 2>/dev/null; then
+              echo "- FAIL \`$chart\` (render error)" >> "$GITHUB_STEP_SUMMARY"
+              fail=1
+            elif kubeconform -strict -ignore-missing-schemas -summary - < "new_res_$name.yaml"; then
+              echo "- PASS \`$chart\`" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "- FAIL \`$chart\`" >> "$GITHUB_STEP_SUMMARY"
+              fail=1
+            fi
+            echo "::endgroup::"
+
+            if [ -n "$worktree" ] && [ -f "$worktree/$chart/Chart.yaml" ]; then
+              helm template "$worktree/$chart" -f "$worktree/gitops/global-values.yaml" > "old_res_$name.yaml" 2>/dev/null
+              delta="$(dyff between --omit-header --no-table-style \
+                "old_res_$name.yaml" "new_res_$name.yaml" 2>/dev/null)"
+              if [ -n "$delta" ]; then
+                {
+                  echo "<details><summary><b>$name</b> resources</summary>"
+                  echo
+                  echo '```'
+                  echo "$delta" | head -n 300
+                  echo '```'
+                  echo "</details>"
+                  echo
+                } >> diff.md
+              fi
+            fi
+          done
+
+          if [ -n "$worktree" ]; then git worktree remove -f "$worktree" 2>/dev/null || true; fi
+
+          {
+            echo "### resources render diff"
+            if [ -s diff.md ]; then cat diff.md; else echo "_No render changes._"; fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "fail=$fail" >> "$GITHUB_OUTPUT"
+      - name: Upsert PR comment with resources render diff
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+            let body = fs.existsSync('diff.md') ? fs.readFileSync('diff.md', 'utf8') : '';
+            const marker = '<!-- render-resources-diff -->';
+            body = body.trim()
+              ? `${marker}\n## Resources render diff (main → this PR)\n\n${body}`
+              : `${marker}\n## Resources render diff (main → this PR)\n\n_No render changes from this PR._`;
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.rest.issues.listComments({ owner, repo, issue_number });
+            const existing = comments.data.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+      - name: Fail if validation failed
+        if: steps.render.outputs.fail == '1'
+        run: exit 1
+  charts:
+    needs: detect
+    if: |
+      (github.event_name == 'pull_request' && needs.detect.outputs.upstream == 'true') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'charts'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: azure/setup-helm@v5
+      - uses: ./.github/actions/setup-tools
       - name: Render, diff (main vs PR) and validate
         id: render
         run: |
@@ -160,12 +205,19 @@ jobs:
             return $rc
           }
 
+          # Drops the Helm-injected version metadata labels that change on every
+          # chart bump (helm.sh/chart, app.kubernetes.io/version, chart) so the
+          # diff only surfaces real, behavioural changes.
+          strip_version_labels() {
+            sed -E '/^[[:space:]]*(helm\.sh\/chart|app\.kubernetes\.io\/version|chart):[[:space:]]/d'
+          }
+
           : > diff.md
           fail=0
           for app in gitops/apps/*.yaml; do
             name="$(basename "$app" .yaml)"
             chart="$(yq '[.spec.sources[] | select(.chart != null) | .chart] | join(",")' "$app")"
-            [ -n "$chart" ] && [ "$chart" != "null" ] || continue
+            if [ -z "$chart" ] || [ "$chart" = "null" ]; then continue; fi
             newver="$(yq '[.spec.sources[] | select(.chart != null) | .targetRevision] | join(",")' "$app")"
 
             echo "::group::validate $name ($chart $newver)"
@@ -179,13 +231,17 @@ jobs:
 
             if [ -n "$worktree" ]; then
               render_side "$worktree" "$name" > "old_$name.yaml"
-              if ! diff -q "old_$name.yaml" "new_$name.yaml" >/dev/null 2>&1; then
+              strip_version_labels < "old_$name.yaml" > "old_${name}.stripped.yaml"
+              strip_version_labels < "new_$name.yaml" > "new_${name}.stripped.yaml"
+              delta="$(dyff between --omit-header --no-table-style \
+                "old_${name}.stripped.yaml" "new_${name}.stripped.yaml" 2>/dev/null)"
+              if [ -n "$delta" ]; then
                 oldver="$(yq '[.spec.sources[] | select(.chart != null) | .targetRevision] | join(",")' "$worktree/gitops/apps/$name.yaml" 2>/dev/null || echo '?')"
                 {
                   echo "<details><summary><b>$name</b> — $chart <code>$oldver</code> → <code>$newver</code></summary>"
                   echo
-                  echo '```diff'
-                  diff -u "old_$name.yaml" "new_$name.yaml" | sed '1,2d' | head -n 300
+                  echo '```'
+                  echo "$delta" | head -n 300
                   echo '```'
                   echo "</details>"
                   echo
@@ -194,7 +250,7 @@ jobs:
             fi
           done
 
-          [ -n "$worktree" ] && git worktree remove -f "$worktree" 2>/dev/null || true
+          if [ -n "$worktree" ]; then git worktree remove -f "$worktree" 2>/dev/null || true; fi
 
           {
             echo "## render-upstream"
@@ -254,11 +310,11 @@ jobs:
       - name: Fail on fmt
         if: steps.fmt.outcome == 'failure'
         run: exit 1
-  shellcheck:
+  scripts:
     needs: detect
     if: |
       (github.event_name == 'pull_request' && needs.detect.outputs.scripts == 'true') ||
-      (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'shellcheck'))
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'scripts'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -274,3 +330,19 @@ jobs:
           fi
           printf '%s\n' "${files[@]/#/- }" >> "$GITHUB_STEP_SUMMARY"
           shellcheck "${files[@]}"
+  actionlint:
+    needs: detect
+    if: |
+      (github.event_name == 'pull_request' && needs.detect.outputs.workflows == 'true') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'actionlint'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Run actionlint
+        env:
+          # renovate: datasource=github-releases depName=rhysd/actionlint
+          ACTIONLINT_VERSION: v1.7.12
+        run: |
+          curl -sSLo actionlint.tar.gz "https://github.com/rhysd/actionlint/releases/download/${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION#v}_linux_amd64.tar.gz"
+          tar xf actionlint.tar.gz actionlint
+          ./actionlint -color
