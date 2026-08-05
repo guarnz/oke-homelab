@@ -17,7 +17,7 @@ The chart brings up the following workloads in the `monitoring` namespace:
 | Workload | Kind | Role |
 |----------|------|------|
 | `prometheus-kube-prometheus-operator` | Deployment | Prometheus Operator — reconciles the Prometheus CR and every `ServiceMonitor`/`PodMonitor` created cluster-wide |
-| `prometheus-prometheus-kube-prometheus-prometheus` | StatefulSet | Prometheus Server (local TSDB, 15d retention) that scrapes cluster targets |
+| `prometheus-prometheus-kube-prometheus-prometheus` | StatefulSet | Prometheus Server (local TSDB, 7d retention) that scrapes cluster targets |
 | `prometheus-grafana` | Deployment | Grafana UI with Prometheus datasource pre-configured |
 | `prometheus-kube-state-metrics` | Deployment | Exposes Kubernetes object state metrics |
 | `prometheus-prometheus-node-exporter` | DaemonSet | Exposes host-level Linux metrics |
@@ -59,10 +59,12 @@ Both Prometheus and Grafana persist data on Longhorn PVCs.
 
 | Workload | PVC | Retention |
 |----------|-----|-----------|
-| Prometheus TSDB | 15Gi | 15 days (or 12GB soft limit, whichever comes first) |
-| Grafana | 5Gi | permanent |
+| Prometheus TSDB | 5Gi | 7 days (or 4GB soft limit, whichever comes first) |
+| Grafana | 1Gi | permanent |
 
-At the current cluster workload count (~15-20 pods, ~7-10k active series) 15Gi covers roughly 30 days of samples with the 15d retention as an upper bound. If the disk fills up, Prometheus stops accepting new samples until compaction reclaims space — the `retentionSize: 12GB` acts as a soft ceiling and starts dropping the oldest blocks before the volume is exhausted.
+At the current cluster workload count (~15-20 pods, ~7-10k active series) the TSDB settles around 1.8GiB with the 7d retention as an upper bound. If the disk fills up, Prometheus stops accepting new samples until compaction reclaims space — the `retentionSize: 4GB` acts as a soft ceiling and starts dropping the oldest blocks before the volume is exhausted.
+
+Note that Longhorn reports higher volume usage than the filesystem does, since thin-provisioned blocks are not reclaimed when files are deleted. Size PVCs against the Longhorn figure, not `kubelet_volume_stats_used_bytes`.
 
 ## Adding new scrape targets
 

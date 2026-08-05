@@ -28,7 +28,7 @@ grafana:
     enabled: true
     type: pvc
     storageClassName: longhorn
-    size: 5Gi
+    size: 1Gi
   resources:
     requests:
       cpu: 50m
@@ -112,8 +112,8 @@ prometheus:
   prometheusSpec:
     replicas: 1
     shards: 1
-    retention: 15d
-    retentionSize: 12GB
+    retention: 7d
+    retentionSize: 4GB
     externalLabels:
       cluster: oci-free-k8s
     scrapeInterval: 60s
@@ -131,7 +131,7 @@ prometheus:
             - ReadWriteOnce
           resources:
             requests:
-              storage: 15Gi
+              storage: 5Gi
     resources:
       requests:
         cpu: 200m
