@@ -58,6 +58,12 @@ alloy:
           expression = "^\\s*$"
         }
 
+        stage.labels {
+          values = {
+            stream = "",
+          }
+        }
+
         forward_to = [loki.write.default.receiver]
       }
 
