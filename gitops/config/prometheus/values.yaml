@@ -45,6 +45,13 @@ grafana:
       searchNamespace: ALL
     datasources:
       enabled: true
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      uid: loki
+      url: http://loki:3100
+      access: proxy
+      isDefault: false
 kubernetesServiceMonitors:
   enabled: true
 kubeApiServer:
