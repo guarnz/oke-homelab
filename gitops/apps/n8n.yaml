@@ -15,7 +15,7 @@ spec:
       ref: values
     - repoURL: https://community-charts.github.io/helm-charts
       chart: n8n
-      targetRevision: 1.24.26
+      targetRevision: 1.24.27
       helm:
         releaseName: n8n
         valueFiles:
