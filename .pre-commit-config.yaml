@@ -16,7 +16,7 @@ repos:
       - id: yamlfmt
         exclude: ^gitops/.*/resources/templates/
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.108.1
+    rev: v1.109.0
     hooks:
       - id: terraform_fmt
   - repo: https://github.com/gitleaks/gitleaks
