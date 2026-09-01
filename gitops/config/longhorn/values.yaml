@@ -9,6 +9,7 @@ defaultSettings:
   guaranteedInstanceManagerCPU: 5
   replicaReplenishmentWaitInterval: 300
   concurrentReplicaRebuildPerNodeLimit: 2
+  freezeFilesystemForSnapshot: true
 persistence:
   defaultClass: true
   defaultClassReplicaCount: 2

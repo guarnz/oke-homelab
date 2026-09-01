@@ -2,3 +2,18 @@ namespace: longhorn-system
 tailscale:
   hostname: storage
   tag: tag:k8s
+backupTargets:
+  - name: b2
+    url: s3://guarnz-backup-longhorn@us-east-005/
+    credentialSecret: longhorn-credentials
+    vaultPath: secret/longhorn
+    pollInterval: 5m0s
+    cron: 0 2 * * *
+    retain: 30
+  - name: oci
+    url: s3://longhorn-backup@sa-vinhedo-1/
+    credentialSecret: longhorn-oci-credentials
+    vaultPath: secret/longhorn-oci
+    pollInterval: 5m0s
+    cron: 0 3 * * *
+    retain: 15

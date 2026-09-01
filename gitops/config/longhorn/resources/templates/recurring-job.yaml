@@ -1,0 +1,17 @@
+{{- range .Values.backupTargets }}
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: backup-{{ .name }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  cron: {{ .cron | quote }}
+  task: backup
+  groups:
+    - backup
+  retain: {{ .retain }}
+  concurrency: 1
+  parameters:
+    full-backup-interval: "7"
+{{- end }}
