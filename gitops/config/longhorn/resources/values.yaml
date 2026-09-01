@@ -10,10 +10,3 @@ backupTargets:
     pollInterval: 5m0s
     cron: 0 2 * * *
     retain: 30
-  - name: oci
-    url: s3://longhorn-backup@sa-vinhedo-1/
-    credentialSecret: longhorn-oci-credentials
-    vaultPath: secret/longhorn-oci
-    pollInterval: 5m0s
-    cron: 0 3 * * *
-    retain: 15
