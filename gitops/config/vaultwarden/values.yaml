@@ -9,6 +9,8 @@ storage:
     name: vaultwarden-data
     size: 1Gi
     accessMode: ReadWriteOnce
+    labels:
+      recurring-job-group.longhorn.io/backup: enabled
 resources:
   requests:
     cpu: 25m
