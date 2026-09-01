@@ -1,0 +1,12 @@
+{{- range .Values.backupTargets }}
+---
+apiVersion: longhorn.io/v1beta2
+kind: BackupTarget
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  backupTargetURL: {{ .url }}
+  credentialSecret: {{ .credentialSecret }}
+  pollInterval: {{ .pollInterval }}
+{{- end }}
