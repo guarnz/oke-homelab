@@ -10,6 +10,7 @@ module "networking" {
 module "oke" {
   source = "./modules/oke"
 
+  cluster_name            = var.cluster_name
   compartment_id          = var.compartment_id
   kubernetes_version      = var.kubernetes_version
   kubernetes_worker_nodes = var.kubernetes_worker_nodes
