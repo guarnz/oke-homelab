@@ -44,3 +44,9 @@ variable "budget_amount" {
   type        = number
   description = "Monthly budget limit in USD"
 }
+
+variable "cluster_name" {
+  type        = string
+  description = "Name for the OKE cluster, used to name related resources"
+  default     = "oke-homelab"
+}
