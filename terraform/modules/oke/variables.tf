@@ -37,3 +37,8 @@ variable "private_subnet_2_id" {
   type        = string
   description = "Private subnet ID for worker nodes (subnet 2)"
 }
+
+variable "cluster_name" {
+  type        = string
+  description = "Name for the OKE cluster, used to name related resources"
+}

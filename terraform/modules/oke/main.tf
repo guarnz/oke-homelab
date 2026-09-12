@@ -1,7 +1,7 @@
 resource "oci_containerengine_cluster" "this" {
   compartment_id     = var.compartment_id
   kubernetes_version = var.kubernetes_version
-  name               = "oci-free-k8s"
+  name               = var.cluster_name
   vcn_id             = var.vcn_id
 
   endpoint_config {
@@ -40,7 +40,7 @@ resource "oci_containerengine_node_pool" "this" {
   cluster_id         = oci_containerengine_cluster.this.id
   compartment_id     = var.compartment_id
   kubernetes_version = var.kubernetes_version
-  name               = "oci-free-k8s-node-pool"
+  name               = "homelab-pool"
 
   node_metadata = {
     user_data = base64encode(file("${path.module}/../../files/node-pool-init.sh"))
@@ -72,8 +72,8 @@ resource "oci_containerengine_node_pool" "this" {
   }
 
   initial_node_labels {
-    key   = "name"
-    value = "oci-free-k8s"
+    key   = "cluster"
+    value = var.cluster_name
   }
 
   ssh_public_key = var.ssh_public_key
