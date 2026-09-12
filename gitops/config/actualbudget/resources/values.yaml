@@ -1,5 +1,0 @@
-subdomain: finance
-namespace: apps
-global:
-  domain: ""
-  issuer: ""

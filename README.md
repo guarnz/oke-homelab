@@ -29,7 +29,6 @@ Fork it, set your domain once in `gitops/global-values.yaml`, populate your own 
 | [VoidAuth](gitops/config/voidauth/README.md) | Identity and Access Management (SSO) |
 | [Vaultwarden](gitops/config/vaultwarden/README.md) | Self-hosted password manager |
 | [N8N](gitops/config/n8n/README.md) | Workflow automation |
-| [Actual Budget](gitops/config/actualbudget/README.md) | Local-first personal finance app |
 | [Metrics Server](gitops/config/metrics-server/README.md) | Resource metrics for HPA and kubectl top |
 | [Prometheus](gitops/config/prometheus/README.md) | Metrics collection with Grafana dashboards |
 
