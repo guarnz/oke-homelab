@@ -2,6 +2,7 @@ provider:
   name: cloudflare
 sources:
   - istio-gateway
+policy: sync
 extraArgs:
   - --exclude-target-net=10.0.0.0/8
   - --cloudflare-proxied
