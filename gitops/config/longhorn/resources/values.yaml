@@ -7,6 +7,6 @@ backupTargets:
     url: s3://guarnz-backup-longhorn@us-east-005/
     credentialSecret: longhorn-credentials
     vaultPath: secret/longhorn
-    pollInterval: 5m0s
+    pollInterval: 1h0m0s
     cron: 0 2 * * *
     retain: 30
