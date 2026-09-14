@@ -89,7 +89,8 @@ jobs:
             [ -f "$chart/Chart.yaml" ] || continue
             name="$(basename "$(dirname "$chart")")"
             echo "::group::$chart"
-            if ! helm template "$chart" -f gitops/global-values.yaml > "new_res_$name.yaml" 2>/dev/null; then
+            if ! helm template "$chart" -f gitops/global-values.yaml > "new_res_$name.yaml" 2>helm_err.txt; then
+              sed 's/^/    /' helm_err.txt
               echo "- FAIL \`$chart\` (render error)" >> "$GITHUB_STEP_SUMMARY"
               fail=1
             elif kubeconform -strict -ignore-missing-schemas -summary - < "new_res_$name.yaml"; then
@@ -199,7 +200,10 @@ jobs:
                 vf="${vf#\$values/}"
                 [ -f "$root/$vf" ] && args+=(-f "$root/$vf")
               done < <(yq "[.spec.sources[] | select(.chart != null)] | .[${i}] | .helm.valueFiles[]?" "$app")
-              helm "${args[@]}" 2>/dev/null || rc=1
+              if ! helm "${args[@]}" 2>helm_err.txt; then
+                rc=1
+                [ "$root" = "." ] && sed 's/^/    /' helm_err.txt >&2
+              fi
               echo "---"
             done
             return $rc
