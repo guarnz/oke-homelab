@@ -15,7 +15,7 @@ spec:
       ref: values
     - repoURL: https://charts.longhorn.io
       chart: longhorn
-      targetRevision: 1.12.1
+      targetRevision: 1.13.0
       helm:
         releaseName: longhorn
         valueFiles:
