@@ -23,6 +23,14 @@
   "prHourlyLimit": 3,
   "packageRules": [
     {
+      "matchPackageNames": ["*"],
+      "semanticCommitType": "build"
+    },
+    {
+      "matchManagers": ["github-actions", "custom.regex"],
+      "semanticCommitType": "ci"
+    },
+    {
       "matchDepNames": ["https://github.com/guarnz/oke-homelab"],
       "enabled": false
     },
