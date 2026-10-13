@@ -1,4 +1,4 @@
-name: Validate
+name: CI
 on:
   pull_request:
   workflow_dispatch:
@@ -10,19 +10,19 @@ on:
         options:
           - all
           - lint
-          - resources
-          - charts
           - terraform
           - scripts
           - workflows
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
-  detect:
+  changes:
     runs-on: ubuntu-latest
     outputs:
-      resources: ${{ steps.filter.outputs.resources }}
-      upstream: ${{ steps.filter.outputs.upstream }}
+      gitops: ${{ steps.filter.outputs.gitops }}
       terraform: ${{ steps.filter.outputs.terraform }}
       scripts: ${{ steps.filter.outputs.scripts }}
       workflows: ${{ steps.filter.outputs.workflows }}
@@ -32,21 +32,17 @@ jobs:
         id: filter
         with:
           filters: |
-            resources:
-              - 'gitops/**/resources/**'
-              - 'gitops/global-values.yaml'
-            upstream:
-              - 'gitops/apps/**'
-              - 'gitops/config/**/values.yaml'
+            gitops:
+              - 'gitops/**'
+              - '.github/workflows/ci.yml'
             terraform:
               - 'terraform/**'
             scripts:
               - '**/*.sh'
             workflows:
               - '.github/workflows/**'
-              - '.github/actions/**'
   lint:
-    needs: detect
+    needs: changes
     if: github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'lint'
     runs-on: ubuntu-latest
     env:
@@ -54,11 +50,58 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
-  resources:
-    needs: detect
-    if: |
-      (github.event_name == 'pull_request' && needs.detect.outputs.resources == 'true') ||
-      (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'resources'))
+  diff:
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.gitops == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          path: pull-request
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          path: main
+      - name: Render the Argo CD diff
+        env:
+          TARGET_BRANCH: refs/pull/${{ github.event.number }}/merge
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          REPO: ${{ github.repository }}
+          TIMEOUT: "600"
+          MAX_DIFF_LENGTH: "60000"
+          DIFF_IGNORE: helm.sh/chart|app.kubernetes.io/version
+        run: |
+          docker run \
+            --network=host \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$PWD/main:/base-branch" \
+            -v "$PWD/pull-request:/target-branch" \
+            -v "$PWD/output:/output" \
+            -e TARGET_BRANCH -e BASE_BRANCH -e REPO -e TIMEOUT -e MAX_DIFF_LENGTH -e DIFF_IGNORE \
+            dagandersen/argocd-diff-preview:v0.2.16@sha256:21e7c8fa794220118feedc6e5316afd90cf0a107bfc845e08aa0291996efd968
+      - name: Upsert PR comment with the Argo CD diff
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- argocd-diff-preview -->';
+            const diff = fs.readFileSync('output/diff.md', 'utf8');
+            const body = `${marker}\n${diff}`;
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+  deadvalues:
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.gitops == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -67,222 +110,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
-      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5
-      - uses: ./.github/actions/setup-tools
-      - name: Render, diff (main vs PR) and validate
-        id: render
-        run: |
-          set +e
-          set -uo pipefail
-          base="${{ github.event.pull_request.base.sha }}"
-          [ -n "$base" ] || base="$(git rev-parse origin/main 2>/dev/null || echo '')"
-          worktree=""
-          if [ -n "$base" ]; then
-            worktree="../base"
-            git worktree add -q --detach "$worktree" "$base" 2>/dev/null || worktree=""
-          fi
-
-          : > diff.md
-          echo "## render-resources" >> "$GITHUB_STEP_SUMMARY"
-          fail=0
-          for chart in gitops/config/*/resources gitops/bootstrap/*/resources; do
-            [ -f "$chart/Chart.yaml" ] || continue
-            name="$(basename "$(dirname "$chart")")"
-            echo "::group::$chart"
-            if ! helm template "$chart" -f gitops/global-values.yaml > "new_res_$name.yaml" 2>helm_err.txt; then
-              sed 's/^/    /' helm_err.txt
-              echo "- FAIL \`$chart\` (render error)" >> "$GITHUB_STEP_SUMMARY"
-              fail=1
-            elif kubeconform -strict -ignore-missing-schemas -summary - < "new_res_$name.yaml"; then
-              echo "- PASS \`$chart\`" >> "$GITHUB_STEP_SUMMARY"
-            else
-              echo "- FAIL \`$chart\`" >> "$GITHUB_STEP_SUMMARY"
-              fail=1
-            fi
-            echo "::endgroup::"
-
-            if [ -n "$worktree" ] && [ -f "$worktree/$chart/Chart.yaml" ]; then
-              helm template "$worktree/$chart" -f "$worktree/gitops/global-values.yaml" > "old_res_$name.yaml" 2>/dev/null
-              delta="$(dyff between --omit-header --no-table-style \
-                "old_res_$name.yaml" "new_res_$name.yaml" 2>/dev/null)"
-              if [ -n "$delta" ]; then
-                {
-                  echo "<details><summary><b>$name</b> resources</summary>"
-                  echo
-                  echo '```'
-                  echo "$delta" | head -n 300
-                  echo '```'
-                  echo "</details>"
-                  echo
-                } >> diff.md
-              fi
-            fi
-          done
-
-          if [ -n "$worktree" ]; then git worktree remove -f "$worktree" 2>/dev/null || true; fi
-
-          {
-            echo "### resources render diff"
-            if [ -s diff.md ]; then cat diff.md; else echo "_No render changes._"; fi
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          echo "fail=$fail" >> "$GITHUB_OUTPUT"
-      - name: Upsert PR comment with resources render diff
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+      - uses: guarnz/deadvalues@ac2be9423da4bc55f85df6e14ee7d99807d24607 # v0.1.1
         with:
-          script: |
-            const fs = require('fs');
-            let body = fs.existsSync('diff.md') ? fs.readFileSync('diff.md', 'utf8') : '';
-            const marker = '<!-- render-resources-diff -->';
-            body = body.trim()
-              ? `${marker}\n## Resources render diff (main → this PR)\n\n${body}`
-              : `${marker}\n## Resources render diff (main → this PR)\n\n_No render changes from this PR._`;
-            const { owner, repo } = context.repo;
-            const issue_number = context.issue.number;
-            const comments = await github.rest.issues.listComments({ owner, repo, issue_number });
-            const existing = comments.data.find(c => c.body && c.body.includes(marker));
-            if (existing) {
-              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
-            } else {
-              await github.rest.issues.createComment({ owner, repo, issue_number, body });
-            }
-      - name: Fail if validation failed
-        if: steps.render.outputs.fail == '1'
-        run: exit 1
-  charts:
-    needs: detect
-    if: |
-      (github.event_name == 'pull_request' && needs.detect.outputs.upstream == 'true') ||
-      (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'charts'))
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0
-      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5
-      - uses: ./.github/actions/setup-tools
-      - name: Render, diff (main vs PR) and validate
-        id: render
-        run: |
-          set +e
-          set -uo pipefail
-          base="${{ github.event.pull_request.base.sha }}"
-          [ -n "$base" ] || base="$(git rev-parse origin/main 2>/dev/null || echo '')"
-          worktree=""
-          if [ -n "$base" ]; then
-            worktree="../base"
-            git worktree add -q --detach "$worktree" "$base" 2>/dev/null || worktree=""
-          fi
-
-          render_side() {
-            local root="$1"
-            local name="$2"
-            local app="$root/gitops/apps/$name.yaml"
-            [ -f "$app" ] || return 0
-            local count i repo chart version release rc=0
-            count="$(yq '[.spec.sources[] | select(.chart != null)] | length' "$app")"
-            for i in $(seq 0 $((count - 1))); do
-              repo="$(yq "[.spec.sources[] | select(.chart != null)] | .[${i}] | .repoURL" "$app")"
-              chart="$(yq "[.spec.sources[] | select(.chart != null)] | .[${i}] | .chart" "$app")"
-              version="$(yq "[.spec.sources[] | select(.chart != null)] | .[${i}] | .targetRevision" "$app")"
-              release="$(yq "[.spec.sources[] | select(.chart != null)] | .[${i}] | .helm.releaseName // .chart" "$app")"
-              local args=(template "$release" "$chart" --repo "$repo" --version "$version" --skip-tests)
-              local vf
-              while IFS= read -r vf; do
-                [ -n "$vf" ] || continue
-                vf="${vf#\$values/}"
-                [ -f "$root/$vf" ] && args+=(-f "$root/$vf")
-              done < <(yq "[.spec.sources[] | select(.chart != null)] | .[${i}] | .helm.valueFiles[]?" "$app")
-              if ! helm "${args[@]}" 2>helm_err.txt; then
-                rc=1
-                [ "$root" = "." ] && sed 's/^/    /' helm_err.txt >&2
-              fi
-              echo "---"
-            done
-            return $rc
-          }
-
-          strip_version_labels() {
-            sed -E '/^[[:space:]]*(helm\.sh\/chart|app\.kubernetes\.io\/version|chart):[[:space:]]/d'
-          }
-
-          : > diff.md
-          fail=0
-          for app in gitops/apps/*.yaml; do
-            name="$(basename "$app" .yaml)"
-            chart="$(yq '[.spec.sources[] | select(.chart != null) | .chart] | join(",")' "$app")"
-            if [ -z "$chart" ] || [ "$chart" = "null" ]; then continue; fi
-            newver="$(yq '[.spec.sources[] | select(.chart != null) | .targetRevision] | join(",")' "$app")"
-
-            echo "::group::validate $name ($chart $newver)"
-            if ! render_side "." "$name" > "new_$name.yaml"; then
-              echo "helm template failed for $name"
-              fail=1
-            elif ! kubeconform -strict -ignore-missing-schemas -summary - < "new_$name.yaml"; then
-              fail=1
-            fi
-            echo "::endgroup::"
-
-            if [ -n "$worktree" ]; then
-              render_side "$worktree" "$name" > "old_$name.yaml"
-              strip_version_labels < "old_$name.yaml" > "old_${name}.stripped.yaml"
-              strip_version_labels < "new_$name.yaml" > "new_${name}.stripped.yaml"
-              delta="$(dyff between --omit-header --no-table-style \
-                "old_${name}.stripped.yaml" "new_${name}.stripped.yaml" 2>/dev/null)"
-              if [ -n "$delta" ]; then
-                oldver="$(yq '[.spec.sources[] | select(.chart != null) | .targetRevision] | join(",")' "$worktree/gitops/apps/$name.yaml" 2>/dev/null || echo '?')"
-                {
-                  echo "<details><summary><b>$name</b> — $chart <code>$oldver</code> → <code>$newver</code></summary>"
-                  echo
-                  echo '```'
-                  echo "$delta" | head -n 300
-                  echo '```'
-                  echo "</details>"
-                  echo
-                } >> diff.md
-              fi
-            fi
-          done
-
-          if [ -n "$worktree" ]; then git worktree remove -f "$worktree" 2>/dev/null || true; fi
-
-          {
-            echo "## render-upstream"
-            if [ -s diff.md ]; then cat diff.md; else echo "_No render changes._"; fi
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          echo "fail=$fail" >> "$GITHUB_OUTPUT"
-      - name: Upsert PR comment with render diff
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
-        with:
-          script: |
-            const fs = require('fs');
-            let body = fs.existsSync('diff.md') ? fs.readFileSync('diff.md', 'utf8') : '';
-            const marker = '<!-- render-diff -->';
-            body = body.trim()
-              ? `${marker}\n## Helm render diff (main → this PR)\n\n${body}`
-              : `${marker}\n## Helm render diff (main → this PR)\n\n_No render changes from this PR._`;
-            const { owner, repo } = context.repo;
-            const issue_number = context.issue.number;
-            const comments = await github.rest.issues.listComments({ owner, repo, issue_number });
-            const existing = comments.data.find(c => c.body && c.body.includes(marker));
-            if (existing) {
-              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
-            } else {
-              await github.rest.issues.createComment({ owner, repo, issue_number, body });
-            }
-      - name: Fail if validation failed
-        if: steps.render.outputs.fail == '1'
-        run: exit 1
+          path: gitops/apps
   terraform:
-    needs: detect
+    needs: changes
     if: |
-      (github.event_name == 'pull_request' && needs.detect.outputs.terraform == 'true') ||
+      (github.event_name == 'pull_request' && needs.changes.outputs.terraform == 'true') ||
       (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'terraform'))
     runs-on: ubuntu-latest
     steps:
@@ -309,9 +143,9 @@ jobs:
         if: steps.fmt.outcome == 'failure'
         run: exit 1
   scripts:
-    needs: detect
+    needs: changes
     if: |
-      (github.event_name == 'pull_request' && needs.detect.outputs.scripts == 'true') ||
+      (github.event_name == 'pull_request' && needs.changes.outputs.scripts == 'true') ||
       (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'scripts'))
     runs-on: ubuntu-latest
     steps:
@@ -329,9 +163,9 @@ jobs:
           printf '%s\n' "${files[@]/#/- }" >> "$GITHUB_STEP_SUMMARY"
           shellcheck "${files[@]}"
   workflows:
-    needs: detect
+    needs: changes
     if: |
-      (github.event_name == 'pull_request' && needs.detect.outputs.workflows == 'true') ||
+      (github.event_name == 'pull_request' && needs.changes.outputs.workflows == 'true') ||
       (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'workflows'))
     runs-on: ubuntu-latest
     steps:
