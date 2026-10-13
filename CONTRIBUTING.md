@@ -16,27 +16,36 @@ Thank you for your interest in contributing! This document covers how to submit 
 
 | Prefix | Use case |
 |--------|----------|
-| `feat/` | New feature or application |
+| `feat/` | New application, feature or behavior change, including removing an application |
 | `fix/` | Bug fix |
 | `docs/` | Documentation only |
-| `chore/` | Maintenance, dependency updates |
+| `build/` | Dependencies, Terraform, OKE and cluster versions |
+| `ci/` | Workflows, Renovate, pre-commit |
+| `refactor/` | Restructure without changing behavior: rename, parameterize, move |
 
 ## Commit Guidelines
 
-We follow [Conventional Commits](https://www.conventionalcommits.org/):
+We follow [Conventional Commits](https://www.conventionalcommits.org/), one line per commit; the details go in the pull request:
 
 ```
 <type>(<scope>): <description>
 ```
 
-**Types:** `feat`, `fix`, `docs`, `chore`, `refactor`
+**Types:** `feat`, `fix`, `docs`, `build`, `ci`, `refactor`, `revert`
+
+Pull requests are squash-merged and the **PR title becomes the commit**, so the title must follow this format; a check enforces it. The commits inside the pull request can be anything.
+
+Removing an application is a breaking change for forks: mark it with `!`, as in `feat!: remove zitadel from the repo`.
 
 **Examples:**
 ```
 feat(apps): add prometheus stack
 fix(vault): correct auto-unseal configuration
 docs(readme): update quick start steps
-chore(deps): update argocd chart to 9.6.0
+build(deps): update argocd chart to 9.6.0
+ci(renovate): group helm charts per app file
+refactor(networking): use generic names for VCN and subnets
+feat!: remove zitadel from the repo
 ```
 
 ## Scope
