@@ -110,7 +110,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
-      - uses: guarnz/deadvalues@ac2be9423da4bc55f85df6e14ee7d99807d24607 # v0.1.1
+      - uses: guarnz/deadvalues@c4c90a8b0ca632c3ba560ae37f69bc984247e36e # v0.1.2
         with:
           path: gitops/apps
   terraform:
