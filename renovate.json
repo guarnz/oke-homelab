@@ -16,6 +16,36 @@
       "/gitops/apps/.+\\.yaml$/"
     ]
   },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/(workflows|actions)/.+\\.ya?ml$/"],
+      "matchStrings": ["ACTIONLINT_VERSION: (?<currentValue>v[0-9.]+)"],
+      "depNameTemplate": "rhysd/actionlint",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/(workflows|actions)/.+\\.ya?ml$/"],
+      "matchStrings": ["KUBECONFORM_VERSION: (?<currentValue>v[0-9.]+)"],
+      "depNameTemplate": "yannh/kubeconform",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/(workflows|actions)/.+\\.ya?ml$/"],
+      "matchStrings": ["YQ_VERSION: (?<currentValue>v[0-9.]+)"],
+      "depNameTemplate": "mikefarah/yq",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/(workflows|actions)/.+\\.ya?ml$/"],
+      "matchStrings": ["DYFF_VERSION: (?<currentValue>v[0-9.]+)"],
+      "depNameTemplate": "homeport/dyff",
+      "datasourceTemplate": "github-releases"
+    }
+  ],
   "timezone": "America/Sao_Paulo",
   "schedule": [
     "after 12am and before 6am every weekday"
