@@ -178,9 +178,6 @@ jobs:
             git worktree add -q --detach "$worktree" "$base" 2>/dev/null || worktree=""
           fi
 
-          # Renders every chart source of an app (an app may have several, each
-          # with its own valueFiles) and concatenates the output. $1=root dir,
-          # $2=app name. Returns non-zero if any source fails to render.
           render_side() {
             local root="$1"
             local name="$2"
@@ -209,9 +206,6 @@ jobs:
             return $rc
           }
 
-          # Drops the Helm-injected version metadata labels that change on every
-          # chart bump (helm.sh/chart, app.kubernetes.io/version, chart) so the
-          # diff only surfaces real, behavioural changes.
           strip_version_labels() {
             sed -E '/^[[:space:]]*(helm\.sh\/chart|app\.kubernetes\.io\/version|chart):[[:space:]]/d'
           }
@@ -344,7 +338,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Run actionlint
         env:
-          # renovate: datasource=github-releases depName=rhysd/actionlint
           ACTIONLINT_VERSION: v1.7.12
         run: |
           curl -sSLo actionlint.tar.gz "https://github.com/rhysd/actionlint/releases/download/${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION#v}_linux_amd64.tar.gz"
