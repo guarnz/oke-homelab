@@ -81,7 +81,7 @@ jobs:
             -v "$PWD/pull-request:/target-branch" \
             -v "$PWD/output:/output" \
             -e TARGET_BRANCH -e BASE_BRANCH -e REPO -e TIMEOUT -e MAX_DIFF_LENGTH -e DIFF_IGNORE \
-            dagandersen/argocd-diff-preview:v0.2.16@sha256:21e7c8fa794220118feedc6e5316afd90cf0a107bfc845e08aa0291996efd968
+            dagandersen/argocd-diff-preview:v0.2.17@sha256:ea90848df29337b50d5058330210b38e39232360b78d9c60951fc92e454c6941
       - name: Upsert PR comment with the Argo CD diff
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
